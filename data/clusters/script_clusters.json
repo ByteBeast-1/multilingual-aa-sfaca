@@ -1,0 +1,15 @@
+{
+  "script_clusters": {
+    "Latin": ["en", "es", "fr", "de", "it", "pt", "nl", "ro", "vi", "id"],
+    "Cyrillic": ["ru", "uk", "bg", "sr", "be", "mk"],
+    "Arabic": ["ar", "fa", "ur", "ps", "sd"],
+    "Devanagari": ["hi", "ne", "mr", "mai"],
+    "Greek": ["el"],
+    "CJK": ["zh", "ja", "ko"],
+    "Semitic_Hebrew": ["he"],
+    "Bengali": ["bn"],
+    "Tamil": ["ta"],
+    "Telugu": ["te"]
+  },
+  "default_cluster": "Other"
+}

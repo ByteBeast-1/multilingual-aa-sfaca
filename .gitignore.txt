@@ -1,0 +1,5 @@
+attribution_env/
+data/raw/*.csv
+data/raw/*.csv.gz
+__pycache__/
+*.pyc

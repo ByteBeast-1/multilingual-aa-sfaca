@@ -1,0 +1,33 @@
+# Experiment Configuration for SFACA Multilingual Authorship Attribution
+
+experiment_name: "sfaca_xlm_roberta_lora"
+
+model:
+  backbone: "xlm-roberta-base"
+  use_lora: true
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.1
+  target_modules: ["query", "value"]
+
+data:
+  raw_data_dir: "data/raw"
+  low_resource_dir: "data/low_resource"
+  cluster_mapping_path: "data/clusters/script_clusters.json"
+  max_seq_length: 256
+  train_batch_size: 16
+  eval_batch_size: 32
+
+training:
+  epochs: 5
+  learning_rate: 2.0e-5
+  contrastive_weight: 0.3
+  temperature: 0.07
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  seed: 42
+  output_dir: "results/checkpoints"
+
+evaluation:
+  results_dir: "results"
+  metrics: ["accuracy", "f1_macro", "f1_weighted"]
