@@ -63,6 +63,9 @@ def train_one_cluster(args):
     optimizer = AdamW(trainable_params, lr=args.lr)
 
     # ---- Training loop ----
+    best_val_f1 = -1.0
+    save_path = f"results/adapters/{args.cluster}"
+
     for epoch in range(args.epochs):
         model.train()
         total_loss = 0.0
@@ -92,16 +95,16 @@ def train_one_cluster(args):
         print(f"Epoch {epoch+1}/{args.epochs} | train_loss={avg_train_loss:.4f} | val_macro_f1={val_f1:.4f}")
         wandb.log({"epoch": epoch + 1, "train_loss": avg_train_loss, "val_macro_f1": val_f1})
 
-    # ---- Save just this cluster's adapter weights and classifier ----
-    save_path = f"results/adapters/{args.cluster}"
-    model.backbone.save_pretrained(save_path)
-    
-    # Save the classification head state dict
-    import os
-    os.makedirs(save_path, exist_ok=True)
-    torch.save(model.classifier.state_dict(), os.path.join(save_path, "classifier.pt"))
-    
-    print(f"Saved '{args.cluster}' adapter and classifier to {save_path}")
+        # Save checkpoint if validation F1 improved
+        if val_f1 > best_val_f1:
+            best_val_f1 = val_f1
+            model.backbone.save_pretrained(save_path)
+            import os
+            os.makedirs(save_path, exist_ok=True)
+            torch.save(model.classifier.state_dict(), os.path.join(save_path, "classifier.pt"))
+            print(f"  --> Saved new best checkpoint with val_macro_f1={best_val_f1:.4f}")
+
+    print(f"Training finished. Best validation F1: {best_val_f1:.4f}")
     wandb.finish()
 
 
