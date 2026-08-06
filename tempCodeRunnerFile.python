@@ -1,0 +1,42 @@
+import matplotlib.pyplot as plt
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+
+# 1. Define the 3 Registers for your QBNN Architecture
+ancilla = QuantumRegister(1, name="Ancilla |0⟩")
+precision = QuantumRegister(4, name="Precision (QPE)")
+data = QuantumRegister(2, name="Data (QRAM)")
+readout = ClassicalRegister(4, name="Single-Shot Readout")
+
+# 2. Build the Circuit
+qc = QuantumCircuit(ancilla, precision, data, readout)
+
+# Step 1: State Preparation (Load |v_i> and |v_j>)
+qc.h(ancilla)
+qc.barrier(label="State Prep")
+
+# Step 2: Precision Register Hadamard Superposition
+for q in precision:
+    qc.h(q)
+qc.barrier(label="Controlled Phase Rotations")
+
+# Step 3: Controlled Grover/Phase Rotations
+for idx, q in enumerate(precision):
+    qc.cp(3.14 / (2 ** idx), q, ancilla[0])
+qc.barrier(label="Inverse QFT")
+
+# Step 4: Inverse Quantum Fourier Transform (iQFT) block representation
+for i in range(len(precision) // 2):
+    qc.swap(precision[i], precision[len(precision) - i - 1])
+for j in range(len(precision)):
+    for m in range(j):
+        qc.cp(-3.14 / float(2 ** (j - m)), precision[m], precision[j])
+    qc.h(precision[j])
+qc.barrier(label="Single-Shot Readout (No Median Loop)")
+
+# Step 5: Measure ONLY ONCE per MCMC sample
+qc.measure(precision, readout)
+
+# 3. Draw and Save as a High-Resolution PNG Image
+fig = qc.draw(output='mpl', style='clifford', plot_barriers=True, fold=-1)
+fig.savefig("single_shot_ipe_blueprint.png", dpi=300, bbox_inches='tight')
+print("✅ Saved 'single_shot_ipe_blueprint.png' successfully!")
