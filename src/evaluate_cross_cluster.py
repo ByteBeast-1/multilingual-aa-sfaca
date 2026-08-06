@@ -36,8 +36,8 @@ def main():
                         help="Which adapter to activate during evaluation. Defaults to train_cluster.")
     parser.add_argument("--adapter_dir", type=str, default="results/adapters",
                         help="Directory where adapters are saved.")
-    parser.add_argument("--batch_size", type=int, default=8)
-    parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--max_length", type=int, default=128)
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -84,6 +84,7 @@ def main():
     model.eval()
     all_preds = []
     all_labels = []
+    use_amp = (device.type == "cuda")
 
     with torch.no_grad():
         for batch in test_loader:
@@ -91,7 +92,8 @@ def main():
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"]
 
-            logits = model(input_ids, attention_mask, eval_adapter)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                logits = model(input_ids, attention_mask, eval_adapter)
             preds = logits.argmax(dim=1).cpu()
 
             all_preds.extend(preds.tolist())
