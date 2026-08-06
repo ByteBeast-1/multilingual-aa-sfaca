@@ -65,6 +65,9 @@ def train_one_cluster(args):
     # ---- Training loop ----
     best_val_f1 = -1.0
     save_path = f"results/adapters/{args.cluster}"
+    
+    use_amp = (device.type == "cuda")
+    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
     for epoch in range(args.epochs):
         model.train()
@@ -77,15 +80,18 @@ def train_one_cluster(args):
 
             optimizer.zero_grad()
 
-            embeddings = model.get_embedding(input_ids, attention_mask, args.cluster)
-            logits = model.classifier(embeddings)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                embeddings = model.get_embedding(input_ids, attention_mask, args.cluster)
+                logits = model.classifier(embeddings)
 
-            loss = combined_loss(
-                logits, embeddings, labels,
-                contrastive_weight=args.contrastive_weight,
-            )
-            loss.backward()
-            optimizer.step()
+                loss = combined_loss(
+                    logits, embeddings, labels,
+                    contrastive_weight=args.contrastive_weight,
+                )
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             total_loss += loss.item()
 
@@ -112,13 +118,15 @@ def train_one_cluster(args):
 def evaluate(model, loader, cluster_name, device):
     model.eval()
     all_preds, all_labels = [], []
+    use_amp = (device.type == "cuda")
 
     for batch in loader:
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         labels = batch["labels"]
 
-        logits = model(input_ids, attention_mask, cluster_name)
+        with torch.cuda.amp.autocast(enabled=use_amp):
+            logits = model(input_ids, attention_mask, cluster_name)
         preds = logits.argmax(dim=1).cpu()
 
         all_preds.extend(preds.tolist())
