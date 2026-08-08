@@ -54,12 +54,17 @@ def evaluate_low_resource(
 
     # Load adapter
     adapter_path = os.path.join(adapters_dir, active_cluster)
-    if os.path.exists(adapter_path):
-        model.backbone.load_adapter(adapter_path, adapter_name=active_cluster)
-        classifier_path = os.path.join(adapter_path, "classifier.pt")
-        if os.path.exists(classifier_path):
-            model.classifier.load_state_dict(torch.load(classifier_path, map_location=device))
-            print(f"Loaded weights for adapter '{active_cluster}'")
+    adapter_file = os.path.join(adapter_path, "adapter_model.bin")
+    if os.path.exists(adapter_file):
+        from peft import set_peft_model_state_dict
+        adapter_weights = torch.load(adapter_file, map_location=device)
+        set_peft_model_state_dict(model.backbone, adapter_weights, adapter_name=active_cluster)
+        print(f"Loaded PEFT adapter weights for '{active_cluster}'")
+        
+    classifier_path = os.path.join(adapter_path, "classifier.pt")
+    if os.path.exists(classifier_path):
+        model.classifier.load_state_dict(torch.load(classifier_path, map_location=device))
+        print(f"Loaded classifier weights for '{active_cluster}'")
 
     model.eval()
     all_preds, all_labels = [], []
@@ -71,7 +76,7 @@ def evaluate_low_resource(
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"]
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.amp.autocast("cuda", enabled=use_amp):
                 logits = model(input_ids, attention_mask, active_cluster)
             preds = logits.argmax(dim=1).cpu()
 
