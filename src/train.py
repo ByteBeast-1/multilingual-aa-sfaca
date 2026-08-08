@@ -46,6 +46,11 @@ def train_one_cluster(args):
     # this matches the base paper's evaluation setup exactly).
     train_df = filter_by_split(cluster_df, "train")
     val_df = filter_by_split(cluster_df, "test")
+    
+    if hasattr(args, "max_train_samples") and args.max_train_samples is not None and len(train_df) > args.max_train_samples:
+        train_df = train_df.sample(n=args.max_train_samples, random_state=42).reset_index(drop=True)
+        print(f"  -> Sub-sampled train_df to {len(train_df)} samples for fast fine-tuning")
+
     print(f"  -> {len(train_df)} train / {len(val_df)} test samples")
 
     tokenizer = build_tokenizer()
@@ -149,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=2e-4)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--contrastive_weight", type=float, default=0.5)
+    parser.add_argument("--max_train_samples", type=int, default=None, help="Cap training samples for ultra-fast fine-tuning")
     args = parser.parse_args()
 
     train_one_cluster(args)
