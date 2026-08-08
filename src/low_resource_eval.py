@@ -15,7 +15,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from transformers import AutoTokenizer
 
-from clusters import ScriptClusterManager, nearest_cluster_for_unseen, LOW_RESOURCE_LANGUAGES
+from clusters import nearest_cluster_for_unseen, LOW_RESOURCE_LANGUAGES
 from data_loader import load_multitude_csv, filter_by_split, AttributionDataset, ID2LABEL
 from model import SFACAModel
 
