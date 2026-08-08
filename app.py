@@ -114,44 +114,45 @@ def analyze_text_attribution(raw_input_text: str, uploaded_file=None):
     model, tokenizer = load_inference_pipeline()
     device = MODEL_CACHE["device"]
 
-    # 1. Parse File Upload if provided
-    text_content = raw_input_text
-    file_info = "Direct Text Input"
+    try:
+        # 1. Parse File Upload if provided
+        text_content = raw_input_text
+        file_info = "Direct Text Input"
 
-    if uploaded_file is not None:
-        try:
-            text_content, file_type = parse_uploaded_file(uploaded_file.name)
-            file_info = f"Uploaded File: {os.path.basename(uploaded_file.name)} ({file_type})"
-        except Exception as e:
-            return f"Error reading uploaded file: {e}", "", "", None, None, ""
+        if uploaded_file is not None:
+            try:
+                text_content, file_type = parse_uploaded_file(uploaded_file.name)
+                file_info = f"Uploaded File: {os.path.basename(uploaded_file.name)} ({file_type})"
+            except Exception as e:
+                return f"Error reading uploaded file: {e}", "", "", None, None, ""
 
-    if not text_content or not text_content.strip():
-        return "Please enter text or upload a document to analyze.", "", "", None, None, ""
+        if not text_content or not text_content.strip():
+            return "Please enter text or upload a document to analyze.", "", "", None, None, ""
 
-    # 2. Math & Notation Sanitization
-    sanitizer = TextSanitizer()
-    clean_text, meta = sanitizer.sanitize(text_content)
+        # 2. Math & Notation Sanitization
+        sanitizer = TextSanitizer()
+        clean_text, meta = sanitizer.sanitize(text_content)
 
-    # 3. Detect Script Cluster & Activate Adapter
-    script_display, active_cluster = detect_script_family(clean_text)
+        # 3. Detect Script Cluster & Activate Adapter
+        script_display, active_cluster = detect_script_family(clean_text)
 
-    # 4. Tokenize & Model Forward Pass
-    inputs = tokenizer(
-        clean_text,
-        truncation=True,
-        max_length=256,
-        padding="max_length",
-        return_tensors="pt"
-    ).to(device)
+        # 4. Tokenize & Model Forward Pass
+        inputs = tokenizer(
+            clean_text,
+            truncation=True,
+            max_length=256,
+            padding="max_length",
+            return_tensors="pt"
+        ).to(device)
 
-    use_amp = (device.type == "cuda")
-    with torch.no_grad():
-        with torch.cuda.amp.autocast(enabled=use_amp):
-            logits = model(inputs["input_ids"], inputs["attention_mask"], active_cluster)
-            raw_probs = F.softmax(logits, dim=1).squeeze(0).cpu().numpy()
+        use_amp = (device.type == "cuda")
+        with torch.no_grad():
+            with torch.amp.autocast("cuda", enabled=use_amp):
+                logits = model(inputs["input_ids"], inputs["attention_mask"], active_cluster)
+                raw_probs = F.softmax(logits, dim=1).squeeze(0).cpu().numpy()
 
-    # Build Class Probabilities Map
-    class_probs = {ID2LABEL[i]: float(raw_probs[i]) for i in range(len(raw_probs))}
+        # Build Class Probabilities Map
+        class_probs = {ID2LABEL.get(i, f"Author_{i}"): float(raw_probs[i]) for i in range(len(raw_probs))}
 
     # 5. Apply Math Notation Confidence Calibration
     calibrated_probs = calibrate_probabilities(class_probs, meta["ndi"], human_class="human")
@@ -221,7 +222,11 @@ def analyze_text_attribution(raw_input_text: str, uploaded_file=None):
         margin=dict(l=40, r=40, t=40, b=20)
     )
 
-    return verdict_badge, model_attribution_summary, notation_status, fig_bar, fig_radar, clean_text[:500]
+        return verdict_badge, model_attribution_summary, notation_status, fig_bar, fig_radar, clean_text[:500]
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"### ❌ Error during analysis: {e}", "", "", None, None, f"Exception details: {e}"
 
 
 # Define Gradio Interface
