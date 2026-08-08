@@ -290,6 +290,7 @@ def build_gradio_app():
     return app
 
 
+demo = build_gradio_app()
+
 if __name__ == "__main__":
-    app = build_gradio_app()
-    app.launch(server_name="0.0.0.0", server_port=7860, share=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
