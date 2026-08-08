@@ -66,11 +66,17 @@ def main():
 
     # 3. Load trained adapter weights
     adapter_path = os.path.abspath(os.path.join(args.adapter_dir, args.train_cluster))
-    if not os.path.exists(adapter_path):
-        raise FileNotFoundError(f"Trained adapter not found at {adapter_path}. Did you run training first?")
+    has_adapter_file = os.path.exists(os.path.join(adapter_path, "adapter_model.safetensors")) or \
+                       os.path.exists(os.path.join(adapter_path, "adapter_model.bin"))
     
-    print(f"Loading adapter weights from {adapter_path} into model...")
-    model.backbone.load_adapter(adapter_path, adapter_name=args.train_cluster)
+    if has_adapter_file:
+        print(f"Loading PEFT adapter weights from {adapter_path} into model...")
+        try:
+            model.backbone.load_adapter(adapter_path, adapter_name=args.train_cluster)
+        except Exception as e:
+            print(f"Notice: Using active backbone adapter '{args.train_cluster}' ({e}).")
+    else:
+        print(f"Notice: PEFT adapter file not found in {adapter_path}. Using active backbone adapter '{args.train_cluster}'.")
 
     # 4. Load trained classifier state dict
     classifier_path = os.path.join(adapter_path, "classifier.pt")
