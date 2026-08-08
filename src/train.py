@@ -105,10 +105,9 @@ def train_one_cluster(args):
         if val_f1 > best_val_f1:
             best_val_f1 = val_f1
             os.makedirs(save_path, exist_ok=True)
-            try:
-                model.backbone.save_pretrained(save_path, selected_adapters=[args.cluster])
-            except Exception:
-                model.backbone.save_pretrained(save_path)
+            from peft import get_peft_model_state_dict
+            adapter_weights = get_peft_model_state_dict(model.backbone, adapter_name=args.cluster)
+            torch.save(adapter_weights, os.path.join(save_path, "adapter_model.bin"))
             torch.save(model.classifier.state_dict(), os.path.join(save_path, "classifier.pt"))
             print(f"  --> Saved new best checkpoint with val_macro_f1={best_val_f1:.4f}")
 
