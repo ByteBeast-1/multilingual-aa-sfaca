@@ -112,8 +112,18 @@ def evaluate_low_resource(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Zero-shot low-resource evaluation")
     parser.add_argument("--data", type=str, required=True, help="Path to MULTITuDE CSV file")
-    parser.add_argument("--lang", type=str, default="ta", help="Target low-resource ISO language code")
+    parser.add_argument("--lang", "--target_lang", type=str, default="ta", help="Target low-resource ISO language code")
     parser.add_argument("--script_hint", type=str, default="latin", help="Script family hint")
+    parser.add_argument("--adapter_dir", "--adapters_dir", type=str, default="results/adapters", help="Directory containing trained adapters")
+    parser.add_argument("--batch_size", type=int, default=32, help="Evaluation batch size")
+    parser.add_argument("--max_length", type=int, default=128, help="Max sequence length")
     args = parser.parse_args()
 
-    evaluate_low_resource(args.data, args.lang, args.script_hint)
+    evaluate_low_resource(
+        data_path=args.data,
+        target_lang=args.lang,
+        script_hint=args.script_hint,
+        adapters_dir=args.adapter_dir,
+        batch_size=args.batch_size,
+        max_length=args.max_length
+    )
