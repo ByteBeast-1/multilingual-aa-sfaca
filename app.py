@@ -154,73 +154,73 @@ def analyze_text_attribution(raw_input_text: str, uploaded_file=None):
         # Build Class Probabilities Map
         class_probs = {ID2LABEL.get(i, f"Author_{i}"): float(raw_probs[i]) for i in range(len(raw_probs))}
 
-    # 5. Apply Math Notation Confidence Calibration
-    calibrated_probs = calibrate_probabilities(class_probs, meta["ndi"], human_class="human")
+        # 5. Apply Math Notation Confidence Calibration
+        calibrated_probs = calibrate_probabilities(class_probs, meta["ndi"], human_class="human")
 
-    # Calculate Binary AI vs Human %
-    human_pct = round(calibrated_probs.get("human", 0.0) * 100, 2)
-    ai_pct = round(100.0 - human_pct, 2)
+        # Calculate Binary AI vs Human %
+        human_pct = round(calibrated_probs.get("human", 0.0) * 100, 2)
+        ai_pct = round(100.0 - human_pct, 2)
 
-    verdict_badge = f"### 🤖 Verdict: **{ai_pct}% AI-Generated** | 👤 **{human_pct}% Human-Written**"
-    if human_pct > 60.0:
-        verdict_badge = f"### 👤 Verdict: **{human_pct}% Human-Written** (Likely Authentic Human Text)"
+        verdict_badge = f"### 🤖 Verdict: **{ai_pct}% AI-Generated** | 👤 **{human_pct}% Human-Written**"
+        if human_pct > 60.0:
+            verdict_badge = f"### 👤 Verdict: **{human_pct}% Human-Written** (Likely Authentic Human Text)"
 
-    # Most Likely Generator Model
-    ai_only_probs = {k: v for k, v in calibrated_probs.items() if k != "human"}
-    top_model = max(ai_only_probs, key=ai_only_probs.get)
-    top_model_prob = round(ai_only_probs[top_model] * 100, 2)
+        # Most Likely Generator Model
+        ai_only_probs = {k: v for k, v in calibrated_probs.items() if k != "human"}
+        top_model = max(ai_only_probs, key=ai_only_probs.get)
+        top_model_prob = round(ai_only_probs[top_model] * 100, 2)
 
-    model_attribution_summary = (
-        f"**Primary Attributed Generator:** `{top_model}` ({top_model_prob}% Confidence)\n\n"
-        f"**Active SFA-CA Adapter:** `{active_cluster.upper()}` ({script_display})\n\n"
-        f"**Source:** {file_info}"
-    )
-
-    # Notation Sanitization Status Badge
-    notation_status = "✅ No heavy math/code notation detected. Standard calibration applied."
-    if meta["has_math_notation"]:
-        notation_status = (
-            f"⚠️ **Math / LaTeX Notation Detected!** (Notation Density Index: `{meta['ndi'] * 100:.1f}%`)\n"
-            f"Extracted `{len(meta['extracted_math'])}` LaTeX math equations. "
-            f"Confidence score calibrated to prevent false-positive AI flags."
+        model_attribution_summary = (
+            f"**Primary Attributed Generator:** `{top_model}` ({top_model_prob}% Confidence)\n\n"
+            f"**Active SFA-CA Adapter:** `{active_cluster.upper()}` ({script_display})\n\n"
+            f"**Source:** {file_info}"
         )
 
-    # 6. Build Interactive Plotly Bar Chart
-    df_chart = pd.DataFrame([
-        {"Class": k, "Probability (%)": round(v * 100, 2)}
-        for k, v in calibrated_probs.items()
-    ]).sort_values(by="Probability (%)", ascending=True)
+        # Notation Sanitization Status Badge
+        notation_status = "✅ No heavy math/code notation detected. Standard calibration applied."
+        if meta["has_math_notation"]:
+            notation_status = (
+                f"⚠️ **Math / LaTeX Notation Detected!** (Notation Density Index: `{meta['ndi'] * 100:.1f}%`)\n"
+                f"Extracted `{len(meta['extracted_math'])}` LaTeX math equations. "
+                f"Confidence score calibrated to prevent false-positive AI flags."
+            )
 
-    fig_bar = px.bar(
-        df_chart,
-        x="Probability (%)",
-        y="Class",
-        orientation="h",
-        color="Probability (%)",
-        color_continuous_scale="Viridis",
-        title="Attribution Probability Distribution across Candidate Authors"
-    )
-    fig_bar.update_layout(showlegend=False, height=350, margin=dict(l=20, r=20, t=40, b=20))
+        # 6. Build Interactive Plotly Bar Chart
+        df_chart = pd.DataFrame([
+            {"Class": k, "Probability (%)": round(v * 100, 2)}
+            for k, v in calibrated_probs.items()
+        ]).sort_values(by="Probability (%)", ascending=True)
 
-    # 7. Build Interactive Radar Chart
-    categories = list(calibrated_probs.keys())
-    values = [round(calibrated_probs[c] * 100, 2) for c in categories]
-    categories.append(categories[0])
-    values.append(values[0])
+        fig_bar = px.bar(
+            df_chart,
+            x="Probability (%)",
+            y="Class",
+            orientation="h",
+            color="Probability (%)",
+            color_continuous_scale="Viridis",
+            title="Attribution Probability Distribution across Candidate Authors"
+        )
+        fig_bar.update_layout(showlegend=False, height=350, margin=dict(l=20, r=20, t=40, b=20))
 
-    fig_radar = go.Figure(data=go.Scatterpolar(
-        r=values,
-        theta=categories,
-        fill="toself",
-        line_color="#636EFA"
-    ))
-    fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
-        showlegend=False,
-        title="Stylistic Provenance Radar Profile",
-        height=350,
-        margin=dict(l=40, r=40, t=40, b=20)
-    )
+        # 7. Build Interactive Radar Chart
+        categories = list(calibrated_probs.keys())
+        values = [round(calibrated_probs[c] * 100, 2) for c in categories]
+        categories.append(categories[0])
+        values.append(values[0])
+
+        fig_radar = go.Figure(data=go.Scatterpolar(
+            r=values,
+            theta=categories,
+            fill="toself",
+            line_color="#636EFA"
+        ))
+        fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+            showlegend=False,
+            title="Stylistic Provenance Radar Profile",
+            height=350,
+            margin=dict(l=40, r=40, t=40, b=20)
+        )
 
         return verdict_badge, model_attribution_summary, notation_status, fig_bar, fig_radar, clean_text[:500]
     except Exception as e:
