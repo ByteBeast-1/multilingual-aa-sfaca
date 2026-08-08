@@ -48,7 +48,7 @@ def augment_dataset(input_csv: str, output_csv: str):
                     new_rows.append({
                         "text": f"[Gemini] {template} (Sample {i+1} in {lang})",
                         "label": 1,
-                        "multi_label": "Gemini-1.5-Pro",
+                        "multi_label": "Gemini-1.5-Flash",
                         "split": split,
                         "language": lang
                     })
