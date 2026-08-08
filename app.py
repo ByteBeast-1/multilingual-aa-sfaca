@@ -18,6 +18,27 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 import pandas as pd
+
+# ── PEFT torchao compatibility patch ──────────────────────────────────────────
+# PEFT 0.19.x raises ImportError when torchao < 0.16.0 (Kaggle locks 0.10.0).
+# Monkey-patch is_torchao_available to return False instead of crashing.
+try:
+    import peft.import_utils as _peft_utils
+    _orig_torchao = _peft_utils.is_torchao_available
+    def _safe_torchao():
+        try:
+            return _orig_torchao()
+        except ImportError:
+            return False
+    _peft_utils.is_torchao_available = _safe_torchao
+    try:
+        import peft.tuners.lora.torchao as _lora_torchao
+        _lora_torchao.is_torchao_available = _safe_torchao
+    except Exception:
+        pass
+except Exception:
+    pass
+# ──────────────────────────────────────────────────────────────────────────────
 import plotly.express as px
 import plotly.graph_objects as go
 import gradio as gr
