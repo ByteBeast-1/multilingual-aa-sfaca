@@ -92,7 +92,7 @@ def main():
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"]
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.amp.autocast("cuda", enabled=use_amp):
                 logits = model(input_ids, attention_mask, eval_adapter)
             preds = logits.argmax(dim=1).cpu()
 
