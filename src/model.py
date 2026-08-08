@@ -23,7 +23,7 @@ from clusters import all_clusters
 
 
 BACKBONE_NAME = "xlm-roberta-large"  # same backbone as base paper's OTBDetector
-NUM_CLASSES = 8                       # 7 LLM generators + human
+NUM_CLASSES = 10                      # 9 LLM generators (inc. Gemini & Claude) + human
 
 
 class SFACAModel(nn.Module):

@@ -30,8 +30,25 @@ LABEL2ID = {
     "Llama-2-70b-chat-hf": 5,
     "aya-101": 6,
     "gpt-3.5-turbo-0125": 7,
+    "Gemini-1.5-Pro": 8,
+    "Claude-3.5-Sonnet": 9,
+    "gemini": 8,
+    "claude": 9,
+    "gemini-1.5-pro": 8,
+    "claude-3.5-sonnet": 9,
 }
-ID2LABEL = {v: k for k, v in LABEL2ID.items()}
+ID2LABEL = {
+    0: "human",
+    1: "Mistral-7B-Instruct-v0.2",
+    2: "opt-iml-max-30b",
+    3: "v5-Eagle-7B-HF",
+    4: "vicuna-13b",
+    5: "Llama-2-70b-chat-hf",
+    6: "aya-101",
+    7: "gpt-3.5-turbo-0125",
+    8: "Gemini-1.5-Pro",
+    9: "Claude-3.5-Sonnet",
+}
 
 
 def load_multitude_csv(path: str, restrict_to_base_paper_18: bool = True) -> pd.DataFrame:
