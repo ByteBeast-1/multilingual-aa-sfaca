@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SFA-CA | Multilingual AI Text Attribution System</title>
+  <meta name="description" content="Script-Family-Aware Contrastive Adaptation for Multi-LLM Detection & Authorship Attribution across 5 language scripts." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="13" stroke="url(#lg1)" stroke-width="2"/>
+            <path d="M8 14 L14 8 L20 14 L14 20 Z" fill="url(#lg2)"/>
+            <circle cx="14" cy="14" r="3" fill="white"/>
+            <defs>
+              <linearGradient id="lg1" x1="0" y1="0" x2="28" y2="28">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="100%" stop-color="#2563eb"/>
+              </linearGradient>
+              <linearGradient id="lg2" x1="0" y1="0" x2="28" y2="28">
+                <stop offset="0%" stop-color="#a78bfa"/>
+                <stop offset="100%" stop-color="#60a5fa"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <span class="logo-title">SFA-CA</span>
+          <span class="logo-sub">AI Attribution System</span>
+        </div>
+      </div>
+      <nav class="nav-badges">
+        <span class="badge badge-purple">XLM-RoBERTa-large</span>
+        <span class="badge badge-blue">LoRA Adapters</span>
+        <span class="badge badge-green" id="status-badge">● Connecting...</span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── HERO ───────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <h1 class="hero-title">
+      Multilingual AI Text<br/>
+      <span class="gradient-text">Attribution & Detection</span>
+    </h1>
+    <p class="hero-sub">
+      Script-Family-Aware Contrastive Adaptation · 5 Language Scripts · 10 LLM Classes
+    </p>
+    <div class="hero-clusters">
+      <span class="cluster-pill">🔤 Latin</span>
+      <span class="cluster-pill">Я Cyrillic</span>
+      <span class="cluster-pill">Ω Greek</span>
+      <span class="cluster-pill">ع Arabic</span>
+      <span class="cluster-pill">漢 Hanzi</span>
+    </div>
+  </section>
+
+  <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
+  <main class="main-grid">
+
+    <!-- LEFT: Input Panel -->
+    <section class="card input-card">
+      <div class="card-header">
+        <span class="card-icon">✍️</span>
+        <h2 class="card-title">Input Text</h2>
+        <span class="char-count" id="char-count">0 chars</span>
+      </div>
+
+      <textarea
+        id="text-input"
+        class="text-area"
+        placeholder="Paste any text in English, Russian, Arabic, Greek, Chinese...&#10;&#10;The system will automatically detect the script and engage the matching LoRA adapter."
+        spellcheck="false"
+      ></textarea>
+
+      <!-- File Upload -->
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📎</div>
+        <div class="upload-label">Drop file here or <span class="upload-link">browse</span></div>
+        <div class="upload-hint">Supports .txt · .pdf · .docx · .md</div>
+        <input type="file" id="file-input" accept=".txt,.pdf,.docx,.md" hidden />
+      </div>
+
+      <div class="input-actions">
+        <button class="btn-clear" id="btn-clear">Clear</button>
+        <button class="btn-analyze" id="btn-analyze">
+          <span class="btn-text">Analyze Attribution</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+
+      <!-- Example texts -->
+      <div class="examples">
+        <span class="examples-label">Try an example:</span>
+        <button class="example-btn" data-text="Large language models have revolutionized natural language processing by enabling zero-shot generalization across diverse linguistic tasks. The transformer architecture's attention mechanism allows models to capture long-range dependencies in text, enabling sophisticated language understanding capabilities.">GPT-style</button>
+        <button class="example-btn" data-text="I'd be happy to help analyze this topic. When considering complex technical frameworks, it is essential to systematically examine each component and evaluate its contribution to the overall system. Let me walk you through this clearly and methodically.">Claude-style</button>
+        <button class="example-btn" data-text="Yesterday I went to the market and bought some vegetables. The weather was nice and I met my neighbor there. We talked for a while about the neighborhood and then I walked back home.">Human-style</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: Results Panel -->
+    <section class="card results-card" id="results-card">
+
+      <!-- Idle state -->
+      <div class="idle-state" id="idle-state">
+        <div class="idle-icon">🔍</div>
+        <h3 class="idle-title">Analysis Output Will Appear Here</h3>
+        <p class="idle-sub">Enter text and click <strong>Analyze Attribution</strong> to begin</p>
+      </div>
+
+      <!-- Loading state -->
+      <div class="loading-state hidden" id="loading-state">
+        <div class="spinner"></div>
+        <p class="loading-text">Analyzing text attribution...</p>
+        <p class="loading-sub">Routing to script adapter · Running inference</p>
+      </div>
+
+      <!-- Results state -->
+      <div class="results-state hidden" id="results-state">
+
+        <!-- Verdict Banner -->
+        <div class="verdict-banner" id="verdict-banner">
+          <div class="verdict-left">
+            <div class="verdict-icon" id="verdict-icon">🤖</div>
+            <div>
+              <div class="verdict-label" id="verdict-label">AI-Generated</div>
+              <div class="verdict-detail" id="verdict-detail">Primary: GPT-3.5-Turbo</div>
+            </div>
+          </div>
+          <div class="confidence-ring-wrap">
+            <svg class="confidence-ring" viewBox="0 0 80 80" width="80" height="80">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="#1e1b4b" stroke-width="8"/>
+              <circle cx="40" cy="40" r="34" fill="none" stroke="url(#ringGrad)"
+                stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="213.6" stroke-dashoffset="213.6"
+                id="confidence-arc" transform="rotate(-90 40 40)"/>
+              <text x="40" y="36" text-anchor="middle" font-size="14" font-weight="700" fill="white" id="conf-pct">87%</text>
+              <text x="40" y="50" text-anchor="middle" font-size="7" fill="#a78bfa">confidence</text>
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#7c3aed"/>
+                  <stop offset="100%" stop-color="#2563eb"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Cluster Badge -->
+        <div class="cluster-badge-row">
+          <span class="meta-label">Active Adapter:</span>
+          <span class="cluster-badge" id="cluster-badge">Latin</span>
+          <span class="meta-label" style="margin-left:12px;">AI Probability:</span>
+          <span class="ai-prob-pill" id="ai-prob-pill">87%</span>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="chart-section">
+          <div class="chart-title">Attribution Probability Distribution</div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="chart-section">
+          <div class="chart-title">Provenance Radar Profile</div>
+          <canvas id="radar-canvas" width="280" height="280"></canvas>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <p>
+      Developed for BTech/BE Final Research Project ·
+      <strong>Script-Family-Aware Contrastive Adaptation (SFA-CA)</strong> ·
+      <a href="https://github.com/ByteBeast-1/multilingual-aa-sfaca" target="_blank" rel="noopener">GitHub ↗</a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
