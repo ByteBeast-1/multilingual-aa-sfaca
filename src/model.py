@@ -52,6 +52,7 @@ class SFACAModel(nn.Module):
             lora_dropout=lora_dropout,
             target_modules=["query", "value"],  # attention projections
             bias="none",
+            use_dora=False,  # Prevents PEFT from probing torchao dispatcher
         )
         # First adapter is added at wrap time; we add the rest by name below.
         self.backbone = get_peft_model(base_model, lora_config,
