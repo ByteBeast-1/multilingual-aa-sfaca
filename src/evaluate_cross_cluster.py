@@ -65,7 +65,7 @@ def main():
     model = SFACAModel(clusters=all_clusters()).to(device)
 
     # 3. Load trained adapter weights
-    adapter_path = os.path.join(args.adapter_dir, args.train_cluster)
+    adapter_path = os.path.abspath(os.path.join(args.adapter_dir, args.train_cluster))
     if not os.path.exists(adapter_path):
         raise FileNotFoundError(f"Trained adapter not found at {adapter_path}. Did you run training first?")
     
