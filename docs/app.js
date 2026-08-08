@@ -5,7 +5,7 @@
 
 // ── Config ────────────────────────────────────────────────────────────────────
 // Replace with your HuggingFace Spaces URL after deployment
-const API_BASE = "https://sandeepsakthi-sfaca-api.hf.space";
+const API_BASE = "https://rocky-musician-groups-mating.trycloudflare.com";
 
 // ── Class color palette ───────────────────────────────────────────────────────
 const CLASS_COLORS = {
