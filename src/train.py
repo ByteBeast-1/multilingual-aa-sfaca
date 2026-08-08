@@ -67,7 +67,7 @@ def train_one_cluster(args):
     save_path = f"results/adapters/{args.cluster}"
     
     use_amp = (device.type == "cuda")
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
 
     for epoch in range(args.epochs):
         model.train()
@@ -80,7 +80,7 @@ def train_one_cluster(args):
 
             optimizer.zero_grad()
 
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.amp.autocast("cuda", enabled=use_amp):
                 embeddings = model.get_embedding(input_ids, attention_mask, args.cluster)
                 logits = model.classifier(embeddings)
 
@@ -125,7 +125,7 @@ def evaluate(model, loader, cluster_name, device):
         attention_mask = batch["attention_mask"].to(device)
         labels = batch["labels"]
 
-        with torch.cuda.amp.autocast(enabled=use_amp):
+        with torch.amp.autocast("cuda", enabled=use_amp):
             logits = model(input_ids, attention_mask, cluster_name)
         preds = logits.argmax(dim=1).cpu()
 
