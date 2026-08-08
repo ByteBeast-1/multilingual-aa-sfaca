@@ -14,6 +14,7 @@ Features:
 import os
 import sys
 import re
+from typing import Tuple
 import torch
 import torch.nn.functional as F
 import pandas as pd
@@ -47,11 +48,14 @@ def load_inference_pipeline():
     # Load available trained adapters from results/adapters
     adapters_dir = "results/adapters"
     if os.path.exists(adapters_dir):
+        from peft import set_peft_model_state_dict
         for cluster in all_clusters():
             adapter_path = os.path.join(adapters_dir, cluster)
-            if os.path.exists(adapter_path):
+            adapter_file = os.path.join(adapter_path, "adapter_model.bin")
+            if os.path.exists(adapter_file):
                 try:
-                    model.backbone.load_adapter(adapter_path, adapter_name=cluster)
+                    adapter_weights = torch.load(adapter_file, map_location=device)
+                    set_peft_model_state_dict(model.backbone, adapter_weights, adapter_name=cluster)
                     classifier_path = os.path.join(adapter_path, "classifier.pt")
                     if os.path.exists(classifier_path):
                         model.classifier.load_state_dict(torch.load(classifier_path, map_location=device))
