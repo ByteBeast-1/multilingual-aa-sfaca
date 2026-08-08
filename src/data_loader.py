@@ -30,12 +30,15 @@ LABEL2ID = {
     "Llama-2-70b-chat-hf": 5,
     "aya-101": 6,
     "gpt-3.5-turbo-0125": 7,
+    "Gemini-2.5-Flash": 8,
+    "Claude-Haiku-4.5": 9,
+    # Legacy aliases (backward compat with old CSV labels)
     "Gemini-1.5-Flash": 8,
-    "Claude-3.5-Sonnet": 9,
     "gemini": 8,
-    "claude": 9,
     "gemini-flash": 8,
     "gemini-3.6-flash": 8,
+    "Claude-3.5-Sonnet": 9,
+    "claude": 9,
     "claude-3.5-sonnet": 9,
 }
 ID2LABEL = {
@@ -47,8 +50,8 @@ ID2LABEL = {
     5: "Llama-2-70b-chat-hf",
     6: "aya-101",
     7: "gpt-3.5-turbo-0125",
-    8: "Gemini-1.5-Flash",
-    9: "Claude-3.5-Sonnet",
+    8: "Gemini-2.5-Flash",
+    9: "Claude-Haiku-4.5",
 }
 
 
