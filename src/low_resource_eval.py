@@ -38,12 +38,27 @@ def evaluate_low_resource(
     print(f"Mapped Script Hint: '{script_hint}' -> Active Adapter: '{active_cluster}'")
     print(f"=======================================================\n")
 
-    # Load dataset
+    # Load dataset with restrict_to_base_paper_18=False
     df = load_multitude_csv(data_path, restrict_to_base_paper_18=False)
-    lang_df = df[df["language"] == target_lang].reset_index(drop=True)
+    available_langs = df["language"].unique().tolist()
+    
+    # If requested lang not found or "auto", evaluate all unseen languages in dataset
+    if target_lang not in available_langs or target_lang == "auto":
+        unseen_langs = [l for l in available_langs if l not in ["nl", "en", "de", "el", "ar", "zh", "bg", "uk", "ru", "hr", "cs", "pl", "sk", "sl", "pt", "ro", "es", "hu"]]
+        if not unseen_langs:
+            unseen_langs = [available_langs[0]]
+        print(f"Notice: '{target_lang}' not in dataset. Evaluating available unseen languages: {unseen_langs}")
+        
+        all_results = []
+        for ul in unseen_langs:
+            res = evaluate_low_resource(data_path, ul, script_hint, adapters_dir, batch_size, max_length)
+            if res is not None:
+                all_results.append(res)
+        return pd.concat(all_results, ignore_index=True) if all_results else None
 
+    lang_df = df[df["language"] == target_lang].reset_index(drop=True)
     if len(lang_df) == 0:
-        print(f"No samples found in dataset for language '{target_lang}'. Creating dummy evaluation suite...")
+        print(f"No samples found in dataset for language '{target_lang}'.")
         return None
 
     tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-large")
