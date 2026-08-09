@@ -90,8 +90,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # Allow GitHub Pages and local dev
-    allow_credentials=True,
+    allow_origins=["*"],          # Allow GitHub Pages and all origins
+    allow_credentials=False,      # Must be False when allow_origins is ["*"] for browser CORS compliance
     allow_methods=["*"],
     allow_headers=["*"],
 )
