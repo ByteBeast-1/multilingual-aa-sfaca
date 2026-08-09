@@ -120,6 +120,25 @@ _MATH_PATTERN = re.compile(
     r"(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\begin\{[^}]+\}[\s\S]+?\\end\{[^}]+\})"
 )
 
+def _detect_script_cluster(text: str) -> str:
+    cyrillic = len(re.findall(r"[\u0400-\u04FF]", text))
+    greek    = len(re.findall(r"[\u0370-\u03FF]", text))
+    arabic   = len(re.findall(r"[\u0600-\u06FF]", text))
+    hanzi    = len(re.findall(r"[\u4E00-\u9FFF]", text))
+    latin    = len(re.findall(r"[a-zA-Z]", text))
+
+    counts = {
+        "cyrillic": cyrillic,
+        "greek": greek,
+        "arabic": arabic,
+        "hanzi": hanzi,
+        "latin": latin
+    }
+
+    best = max(counts, key=counts.get)
+    return best if counts[best] > 0 else "latin"
+
+
 def _sanitize(text: str) -> tuple[str, bool]:
     cleaned, n = _MATH_PATTERN.subn(" [MATH] ", text)
     return cleaned.strip(), n > 0
@@ -150,7 +169,7 @@ def analyze(req: AnalyzeRequest):
         raise HTTPException(status_code=400, detail="Text too short (min 10 chars).")
 
     sanitized, had_math = _sanitize(req.text)
-    cluster = get_cluster(sanitized)
+    cluster = _detect_script_cluster(sanitized)
 
     enc = _TOKENIZER(
         sanitized,
