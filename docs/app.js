@@ -5,7 +5,7 @@
 
 // ── Config ────────────────────────────────────────────────────────────────────
 // Replace with your HuggingFace Spaces URL after deployment
-const API_BASE = "https://compile-list-jail-ages.trycloudflare.com";
+const API_BASE = "https://creatures-darwin-writing-clinic.trycloudflare.com";
 
 // ── Class color palette ───────────────────────────────────────────────────────
 const CLASS_COLORS = {
