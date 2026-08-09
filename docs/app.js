@@ -5,7 +5,7 @@
 
 // ── Config ────────────────────────────────────────────────────────────────────
 // Replace with your HuggingFace Spaces URL after deployment
-const API_BASE = "https://spin-str-enquiries-uniprotkb.trycloudflare.com";
+const API_BASE = "https://lived-fixes-nursery-fiction.trycloudflare.com";
 
 // ── Class color palette ───────────────────────────────────────────────────────
 const CLASS_COLORS = {
