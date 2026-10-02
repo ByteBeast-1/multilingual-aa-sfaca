@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SFA-CA · AI Text Attribution</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f6f8;--card:#fff;--bd:#e2e5ea;--tx:#161a22;--mut:#667085;--ai:#e5484d;--hu:#26a269;--ac:#7c6cf0;--no:#98a2b3}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1d;--card:#262628;--bd:#37373b;--tx:#ececf0;--mut:#9a9aa5;--ai:#ff6369;--hu:#3dd68c;--ac:#9a8cff;--no:#6b6b75}}
+:root[data-theme="dark"]{--bg:#1b1b1d;--card:#262628;--bd:#37373b;--tx:#ececf0;--mut:#9a9aa5;--ai:#ff6369;--hu:#3dd68c;--ac:#9a8cff;--no:#6b6b75}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--mut);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:16px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{border:1px solid var(--bd);background:transparent;color:var(--mut);padding:6px 14px;border-radius:999px;cursor:pointer;font:inherit}
+.tab.on{background:var(--ac);border-color:var(--ac);color:#fff}
+textarea{width:100%;min-height:150px;resize:vertical;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:12px;font:inherit}
+.drop{border:2px dashed var(--bd);border-radius:12px;padding:34px 12px;text-align:center;color:var(--mut);cursor:pointer}
+.drop.over{border-color:var(--ac);color:var(--tx)}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 22px;font:inherit;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;border:1px solid var(--bd);color:var(--tx)}
+.hint{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:260px 1fr;gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.donutbox{text-align:center}
+.big{font-size:30px;font-weight:700}
+.legend{display:flex;gap:14px;justify-content:center;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+h3{margin:0 0 10px;font-size:15px}
+.gen{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin:5px 0}
+.track{height:9px;background:var(--bg);border-radius:6px;overflow:hidden}
+.fill{height:100%;background:var(--ac);border-radius:6px}
+.top .fill{background:var(--ai)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font-size:12px;border:1px solid var(--bd);border-radius:999px;padding:3px 10px;color:var(--mut)}
+.chip b{color:var(--tx)}
+.doc{white-space:pre-wrap;word-wrap:break-word;line-height:1.8}
+.seg{border-radius:4px;padding:1px 0;cursor:help}
+.seg.flash{outline:2px solid var(--ac)}
+.not{border-bottom:1px dashed var(--no);color:var(--mut);font-family:ui-monospace,Menlo,monospace;font-size:.92em}
+.plot{overflow-x:auto}
+svg text{fill:var(--mut);font-size:10px}
+.err{color:var(--ai)}
+.hidden{display:none}
+</style></head>
+<body><div class="wrap">
+<header><span style="font-size:24px">🔎</span><h1>AI Text Attribution</h1></header>
+<p class="sub">Paste text or upload a file. Get the AI / human split, the likely generator, and exactly which passages look machine-written.</p>
+
+<div class="card">
+  <div class="tabs"><button class="tab on" data-m="text">Paste text</button><button class="tab" data-m="file">Upload file</button></div>
+  <div id="pText"><textarea id="txt" placeholder="Paste text in any supported language. LaTeX and code are detected and excluded from scoring."></textarea></div>
+  <div id="pFile" class="hidden">
+    <div class="drop" id="drop">Drop a .pdf, .docx, .txt or .md here, or click to browse<br><span id="fname" class="hint"></span></div>
+    <input type="file" id="fin" accept=".pdf,.docx,.txt,.md" hidden>
+  </div>
+  <div class="row"><span class="hint" id="modeNote"></span>
+    <span><button class="btn ghost" id="sample">Load sample</button> <button class="btn" id="go">Analyze</button></span></div>
+  <div id="err" class="err hint"></div>
+</div>
+
+<div id="res" class="hidden">
+  <div class="chips" id="chips"></div>
+  <div class="grid">
+    <div class="card donutbox">
+      <svg id="donut" viewBox="0 0 120 120" width="190" height="190"></svg>
+      <div class="big" id="aiPct"></div>
+      <div class="legend"><span><i class="dot" style="background:var(--ai)"></i>AI</span><span><i class="dot" style="background:var(--hu)"></i>Human</span></div>
+    </div>
+    <div class="card"><h3>Who wrote it? (10-class attribution)</h3><div id="gens"></div></div>
+  </div>
+  <div class="card"><h3>AI probability across the document</h3><div class="plot" id="plot"></div>
+    <div class="hint">Each bar is one passage. Click a bar to jump to it. Grey bars are math/code, excluded from scoring.</div></div>
+  <div class="card"><h3>Where the AI text is</h3>
+    <div class="chips"><span class="chip"><i class="dot" style="background:var(--ai)"></i>darker = more likely AI</span><span class="chip"><span class="not">$x^2$</span> math/code excluded</span><span class="chip" id="flagged"></span></div>
+    <div class="doc" id="doc"></div></div>
+</div>
+</div>
+
+<script>
+// Set to your FastAPI URL to use the real model. Empty = demo scoring in the browser.
+const API_URL="";
+const GEN=["Human","Mistral-7B","OPT-IML-30B","Eagle-7B","Vicuna-13B","Llama-2-70B","Aya-101","GPT-3.5","Gemini-2.5-Flash","Claude-Haiku-4.5"];
+const SAMPLE="Photosynthesis is the process by which plants convert light into chemical energy. I remember my grandmother watering her tomatoes every dawn, grumbling about the heat. Moreover, it is crucial to understand that this process plays a pivotal role in sustaining life on Earth. The overall reaction can be written as $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$ for the net process. Furthermore, researchers continue to delve into the multifaceted mechanisms that underpin it. Honestly, the lab results we got last week were a mess.";
+const $=s=>document.querySelector(s);
+let mode="text",file=null;
+$("#modeNote").textContent=API_URL?"Connected to model API":"Demo mode: scores are simulated. Set API_URL to use the trained adapters.";
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{mode=b.dataset.m;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  $("#pText").classList.toggle("hidden",mode!=="text");$("#pFile").classList.toggle("hidden",mode!=="file")});
+$("#drop").onclick=()=>$("#fin").click();
+$("#fin").onchange=e=>setFile(e.target.files[0]);
+["dragover","dragleave","drop"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();
+  $("#drop").classList.toggle("over",ev==="dragover");if(ev==="drop")setFile(e.dataTransfer.files[0])}));
+function setFile(f){if(f){file=f;$("#fname").textContent=f.name}}
+$("#sample").onclick=()=>{mode="text";document.querySelector('.tab[data-m="text"]').click();$("#txt").value=SAMPLE};
+
+function hash(s){let x=2166136261;for(const c of s){x^=c.charCodeAt(0);x=Math.imul(x,16777619)}return(x>>>0)/4294967295}
+function detectScript(t){const c=r=>(t.match(r)||[]).length;
+  const m={Arabic:c(/[\u0600-\u06FF]/g),Cyrillic:c(/[\u0400-\u04FF]/g),Greek:c(/[\u0370-\u03FF]/g),Hanzi:c(/[\u4E00-\u9FFF]/g)};
+  const k=Object.keys(m).sort((a,b)=>m[b]-m[a])[0];return m[k]>t.length*.2?k:"Latin"}
+
+function demo(text){
+  const re=/(\$\$[\s\S]+?\$\$|\$[^$\n]+\$|\\begin\{[^}]+\}[\s\S]+?\\end\{[^}]+\}|```[\s\S]*?```)/g;
+  const segs=[];
+  text.split(re).forEach((p,i)=>{
+    if(i%2){segs.push({text:p,type:"notation"});return}
+    (p.match(/[^.!?。！？\n]+[.!?。！？]*\s*/g)||[]).forEach(t=>{if(t.trim())segs.push({text:t,type:"text"})});
+  });
+  let tot=0,w=0,nlen=0;
+  segs.forEach(s=>{
+    if(s.type==="notation"){nlen+=s.text.length;return}
+    let p=.12+.6*hash(s.text);
+    if(/moreover|furthermore|delve|crucial|pivotal|overall|multifaceted/i.test(s.text))p+=.25;
+    if(/\b(I|honestly|my)\b/i.test(s.text))p-=.2;
+    s.ai_prob=Math.max(.03,Math.min(.97,p));tot+=s.text.length;w+=s.ai_prob*s.text.length});
+  const ndi=nlen/(text.length||1);let ai=tot?w/tot:0;
+  if(ndi>.05)ai*=.85;
+  const g=1+Math.floor(hash(text)*9),probs={};
+  GEN.forEach((n,i)=>probs[n]=i===0?1-ai:i===g?ai*.55:ai*.45/8);
+  return{ai_pct:ai*100,human_pct:(1-ai)*100,generator_probs:probs,script:detectScript(text),ndi,calibrated:ndi>.05,segments:segs};
+}
+
+async function analyze(){
+  $("#err").textContent="";$("#go").disabled=true;$("#go").textContent="Analyzing…";
+  try{
+    let data;
+    if(API_URL){
+      const fd=new FormData();
+      if(mode==="file"&&file)fd.append("file",file);else fd.append("text",$("#txt").value);
+      const r=await fetch(API_URL+"/api/analyze",{method:"POST",body:fd});
+      if(!r.ok)throw new Error("API error "+r.status);data=await r.json();
+    }else{
+      let text=$("#txt").value;
+      if(mode==="file"){
+        if(!file)throw new Error("Choose a file first.");
+        if(!/\.(txt|md)$/i.test(file.name))throw new Error("Demo mode reads .txt/.md only. PDF and DOCX are parsed by the backend.");
+        text=await file.text();
+      }
+      if(text.trim().length<40)throw new Error("Please provide at least a couple of sentences.");
+      data=demo(text);
+    }
+    render(data);
+  }catch(e){$("#err").textContent=e.message}
+  $("#go").disabled=false;$("#go").textContent="Analyze";
+}
+$("#go").onclick=analyze;
+
+function render(d){
+  $("#res").classList.remove("hidden");
+  const probs=Object.entries(d.generator_probs).sort((a,b)=>b[1]-a[1]);
+  const topAI=probs.find(x=>x[0]!=="Human");
+  $("#chips").innerHTML=`<span class="chip">Script: <b>${d.script}</b></span><span class="chip">Adapter: <b>${d.script} LoRA</b></span>
+   <span class="chip">Notation density: <b>${(d.ndi*100).toFixed(1)}%</b></span>
+   ${d.calibrated?'<span class="chip"><b>Notation-aware calibration applied</b></span>':""}
+   <span class="chip">Likely source: <b>${d.ai_pct>=50?topAI[0]:"Human"}</b></span>`;
+  const C=2*Math.PI*46,a=d.ai_pct/100*C;
+  $("#donut").innerHTML=`<circle cx="60" cy="60" r="46" fill="none" stroke="var(--hu)" stroke-width="16"/>
+   <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ai)" stroke-width="16" stroke-dasharray="${a} ${C}" transform="rotate(-90 60 60)"/>`;
+  $("#aiPct").textContent=`${d.ai_pct.toFixed(1)}% AI · ${d.human_pct.toFixed(1)}% Human`;
+  $("#aiPct").style.fontSize="17px";
+  $("#gens").innerHTML=probs.map(([n,p],i)=>`<div class="gen ${i===0?"top":""}"><span>${n}</span><div class="track"><div class="fill" style="width:${p*100}%"></div></div><span>${(p*100).toFixed(1)}%</span></div>`).join("");
+  const segs=d.segments,n=segs.length,W=Math.max(600,n*14),bw=W/n;
+  let bars="",flag=0,tc=0;
+  segs.forEach((s,i)=>{
+    if(s.type==="notation"){bars+=`<rect x="${i*bw+1}" y="92" width="${bw-2}" height="8" fill="var(--no)"/>`;return}
+    tc++;if(s.ai_prob>=.6)flag++;
+    const h=s.ai_prob*90;
+    bars+=`<rect data-i="${i}" x="${i*bw+1}" y="${100-h}" width="${bw-2}" height="${h}" rx="2" fill="${s.ai_prob>=.5?"var(--ai)":"var(--hu)"}" style="cursor:pointer"><title>${(s.ai_prob*100).toFixed(0)}% AI</title></rect>`});
+  $("#plot").innerHTML=`<svg viewBox="0 0 ${W} 112" width="${W}" height="150" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="55" y2="55" stroke="var(--bd)" stroke-dasharray="4"/><text x="2" y="52">50%</text>${bars}</svg>`;
+  $("#plot").querySelectorAll("rect[data-i]").forEach(r=>r.onclick=()=>{
+    const el=document.getElementById("s"+r.dataset.i);el.scrollIntoView({behavior:"smooth",block:"center"});
+    el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1500)});
+  $("#flagged").textContent=`${flag} of ${tc} passages flagged (≥60% AI)`;
+  const esc=t=>t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  $("#doc").innerHTML=segs.map((s,i)=>s.type==="notation"
+    ?`<span class="seg not" id="s${i}" title="Math/code: excluded from scoring">${esc(s.text)}</span>`
+    :`<span class="seg" id="s${i}" title="${(s.ai_prob*100).toFixed(0)}% AI" style="background:color-mix(in srgb,var(--ai) ${Math.round(s.ai_prob*55)}%,transparent)">${esc(s.text)}</span>`).join("");
+  $("#res").scrollIntoView({behavior:"smooth"});
+}
+</script></body></html>
