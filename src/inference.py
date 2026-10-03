@@ -5,28 +5,11 @@ import re
 import torch
 import torch.nn as nn
 
-# PEFT torchao compatibility patch
-try:
-    import peft.import_utils as _peft_utils
-    _orig_torchao = _peft_utils.is_torchao_available
-    def _safe_torchao():
-        try:
-            return _orig_torchao()
-        except ImportError:
-            return False
-    _peft_utils.is_torchao_available = _safe_torchao
-    try:
-        import peft.tuners.lora.torchao as _lora_torchao
-        _lora_torchao.is_torchao_available = _safe_torchao
-        _lora_torchao.dispatch_torchao = lambda *a, **kw: None
-    except Exception:
-        pass
-except Exception:
-    pass
+import compat
 
-from .model import SFACAModel, build_tokenizer
-from .clusters import all_clusters
-from .data_loader import ID2LABEL
+from model import SFACAModel, build_tokenizer
+from clusters import all_clusters
+from data_loader import ID2LABEL
 
 def detect_script_cluster(text: str) -> str:
     """

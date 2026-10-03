@@ -20,14 +20,7 @@ import torch
 import torch.nn.functional as F
 import uvicorn
 
-# ── PEFT torchao compatibility patch ─────────────────────────────────────────
-# Replace dispatch_torchao directly (avoids recursive is_torchao_available wrapping)
-try:
-    import peft.tuners.lora.torchao as _lora_torchao
-    _lora_torchao.dispatch_torchao = lambda *a, **kw: None
-except Exception:
-    pass
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
