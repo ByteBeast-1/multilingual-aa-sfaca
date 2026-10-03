@@ -69,10 +69,11 @@ def check_leakage(splits_path='data/processed/splits_8class.csv', raw_path='data
         print("FAIL: Test set row IDs do not perfectly match the expected original test rows.")
         return False
 
-    # 4. No normalized-hash overlap among train/val/test
-    train_hashes = set(splits[splits['split'] == 'train']['norm_hash'])
-    val_hashes = set(splits[splits['split'] == 'val']['norm_hash'])
-    test_hashes = set(splits[splits['split'] == 'test']['norm_hash'])
+    # 4. No normalized-hash overlap among train/val/test (excluding empty hashes)
+    empty_hash = hash_text("")
+    train_hashes = set(splits[(splits['split'] == 'train') & (splits['norm_hash'] != empty_hash)]['norm_hash'])
+    val_hashes = set(splits[(splits['split'] == 'val') & (splits['norm_hash'] != empty_hash)]['norm_hash'])
+    test_hashes = set(splits[(splits['split'] == 'test') & (splits['norm_hash'] != empty_hash)]['norm_hash'])
     
     if train_hashes.intersection(val_hashes):
         print(f"FAIL: Train and Val have {len(train_hashes.intersection(val_hashes))} overlapping hashes.")

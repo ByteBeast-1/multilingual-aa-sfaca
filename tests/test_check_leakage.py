@@ -80,3 +80,26 @@ def test_leakage_gemini(clean_mock_data, capsys):
     assert check_leakage(splits_path, raw_path) == False
     out, _ = capsys.readouterr()
     assert "FAIL: Found Gemini/Claude labels in splits." in out
+
+def test_leakage_empty_hash_ok(clean_mock_data, capsys):
+    splits_path, raw_path = clean_mock_data
+    # Empty hashes shouldn't trigger the leak check
+    splits = pd.read_csv(splits_path)
+    new_row = pd.DataFrame({'row_id': [4], 'cluster': ['latin'], 'language': ['en'], 'multi_label': ['human'], 'split': ['val'], 'group_id': [9]})
+    splits = pd.concat([splits, new_row])
+    splits.to_csv(splits_path, index=False)
+    
+    raw = pd.read_csv(raw_path)
+    # text that normalizes to empty
+    new_raw = pd.DataFrame({'row_id': [4], 'text': ['... /// ...'], 'language': ['en'], 'multi_label': ['human'], 'split': ['val']})
+    raw = pd.concat([raw, new_raw])
+    # Also add an empty hash to train
+    new_raw_2 = pd.DataFrame({'row_id': [5], 'text': ['-- --'], 'language': ['en'], 'multi_label': ['human'], 'split': ['train']})
+    raw = pd.concat([raw, new_raw_2])
+    raw.to_csv(raw_path, index=False)
+    
+    new_split_row = pd.DataFrame({'row_id': [5], 'cluster': ['latin'], 'language': ['en'], 'multi_label': ['human'], 'split': ['train'], 'group_id': [10]})
+    splits = pd.concat([splits, new_split_row])
+    splits.to_csv(splits_path, index=False)
+    
+    assert check_leakage(splits_path, raw_path) == True
