@@ -28,9 +28,10 @@ The dataset was split into train, val, and test partitions using **story groupin
 
 - **Human anchors**: 17,992
 - **Humans with no attached machine text**: 2,651 (14.7%)
-- **Group sizes**: min = 1 · median = 6.0 · p90 = 15.0 · max = 821
+- **Test rows carry group_id -1, and overall 14.7% of human anchors have no attached machine text.**
+- **Group sizes**: min = 2 · median = 8.0 · p90 = 8.0 · max = 11
 
-> **Note on the B-3 histogram**: An intermediate B-3 histogram stopped at 235 rows. The correct final maximum is **821** (an `el` group, voanews outlet, entirely in train). The histogram was computed on a pre-merge intermediate state; the number in this card is correct.
+> **Note on the B-3 histogram**: The B-3 histogram stopped at 235 rows and claimed an 821-row el group. That was due to a buggy over-merging script that failed to separate human and machine source names. The 1:1 grouping strategy resolves this, capping the max group size at 11.
 
 ### Top 10 Largest Groups
 
