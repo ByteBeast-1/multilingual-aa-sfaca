@@ -3,7 +3,15 @@ data/raw/*.csv
 data/raw/*.csv.gz
 __pycache__/
 *.pyc
-results/
+results/*
+!results/*.md
+!results/*.json
+!results/*.csv
+results/adapters/
+*.bin
+*.pt
+*.safetensors
+*.zip
 .ipynb_checkpoints/
 read_docx.py
 Project_Report_Script_Family_Adapters.txt
