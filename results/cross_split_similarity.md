@@ -79,6 +79,7 @@ Comparing maximum cosine similarity of val/test rows to train rows of **differen
 
 ## Conclusion
 
-**Test->Train similarity is HIGH** for languages: de, es, en, ro, nl, pt, hr, zh, ar, sk. This indicates that the benchmark's original test split shares story groups with the train split, meaning the benchmark itself leaks stories across its splits.
-
-The actual val->train similarity should be significantly lower than the random val->train similarity, demonstrating that the grouped splitting successfully prevented story leakage into the validation set.
+- In **15 out of 18 languages**, the actual `val->train` similarity is lower than the random control. The three exceptions are **hu, pl, and ro**, where the validation split is more similar to train than the random control (meaning the grouped split leaked more in these languages).
+- In **18 out of 18 languages**, the actual `test->train` similarity is lower than the random control.
+- In **14 out of 18 languages**, the `val->train` similarity is higher than the `test->train` similarity, indicating that the validation split is leakier than the test split.
+- The per-language share of test rows with similarity above 0.7 (`max_sim_train_other >= 0.7`) is: ar: 2.2%, bg: 2.6%, cs: 2.2%, de: 0.8%, el: 2.3%, en: 2.2%, es: 1.6%, hr: 1.4%, hu: 1.2%, nl: 1.2%, pl: 0.7%, pt: 2.7%, ro: 0.5%, ru: 2.4%, sk: 2.2%, sl: 1.1%, uk: 2.0%, zh: 5.3%.

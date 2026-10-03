@@ -5,9 +5,20 @@
 
 ## Story Grouping Diagnostics
 - **Total groups**: 17992
-- **Singleton rate**: 14.73% (2651 / 17992)
-- **Groups with exactly 1 human**: 17992 (117.28% of non-singletons)
-
+- **Number of human anchors**: 17992
+- **Humans with no attached machine text**: 2651
+- **Group size min/median/p90/max**: 1 / 6.0 / 15.0 / 821
+- **Top 10 largest groups**:
+  - Group 4766: size 821, el, MULTITuDE_MassiveSumm_voanews
+  - Group 729: size 793, ar, MULTITuDE_MassiveSumm_rt
+  - Group 14888: size 566, sk, MULTITuDE_MassiveSumm_sme
+  - Group 2533: size 467, cs, MULTITuDE_MassiveSumm_denik
+  - Group 8508: size 436, hu, MULTITuDE_MassiveSumm_24
+  - Group 9032: size 252, nl, MULTITuDE_MassiveSumm_globalvoices
+  - Group 11658: size 241, pt, MULTITuDE_MassiveSumm_rfi
+  - Group 6294: size 238, es, MULTITuDE_MassiveSumm_20minutos
+  - Group 12144: size 235, ro, MULTITuDE_MassiveSumm_dw
+  - Group 4148: size 213, el, MULTITuDE_MassiveSumm_eleftherostypos
 ## Group Size Histogram
 - Size 1: 2651 groups
 - Size 2: 1767 groups
