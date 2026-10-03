@@ -48,12 +48,22 @@ def detect_dominant_script(text):
         return 'unknown'
     return max(script_counts, key=script_counts.get)
 
+import argparse
+
 def build_splits():
-    raw_path = 'data/raw/multitude_v3_clean.csv'
-    out_path = 'data/processed/splits_8class.csv'
-    report_path = 'results/split_report.md'
-    os.makedirs('data/processed', exist_ok=True)
-    os.makedirs('results', exist_ok=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--raw_path', default='data/raw/multitude_v3_clean.csv')
+    parser.add_argument('--out_path', default='data/processed/splits_8class.csv')
+    parser.add_argument('--report_path', default='results/split_report.md')
+    args = parser.parse_args()
+
+    raw_path = args.raw_path
+    out_path = args.out_path
+    report_path = args.report_path
+    
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    if os.path.dirname(report_path):
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
 
     if not os.path.exists(raw_path):
         print(f"Error: {raw_path} not found.")

@@ -25,6 +25,51 @@ The dataset was split into train, val, and test partitions using **story groupin
 - `flag_prompt_echo`: True if the text contains one of the known prompt-leakage regex patterns (e.g. `(?i)\b(task write|task translate...)\b`).
 - `story_disjoint`: True if the row's maximum cosine similarity to any train row of a different label in the same language is strictly less than 0.7 (`max_sim_train_other < 0.7`).
 
+## Story Disjointness
+The `max_sim_train_other` column measures the maximum TF-IDF cosine similarity of a val or test row to any train row of a different label in the same language. The `story_disjoint` flag is True if this similarity is strictly less than 0.7. These columns measure the "cleanliness" of the test and validation sets against story leakage from the train set (i.e. ensuring a machine-generated text in the test set does not have its original human anchor story in the train set). 
+
+Share of `story_disjoint` rows per language:
+
+**VAL**:
+- ar: 99.5% disjoint
+- bg: 99.3% disjoint
+- cs: 100.0% disjoint
+- de: 99.6% disjoint
+- el: 100.0% disjoint
+- en: 94.7% disjoint
+- es: 98.1% disjoint
+- hr: 99.6% disjoint
+- hu: 95.2% disjoint
+- nl: 98.9% disjoint
+- pl: 96.3% disjoint
+- pt: 98.9% disjoint
+- ro: 94.1% disjoint
+- ru: 96.5% disjoint
+- sk: 99.4% disjoint
+- sl: 99.9% disjoint
+- uk: 99.3% disjoint
+- zh: 95.3% disjoint
+
+**TEST**:
+- ar: 97.8% disjoint
+- bg: 97.4% disjoint
+- cs: 97.8% disjoint
+- de: 99.2% disjoint
+- el: 97.7% disjoint
+- en: 97.8% disjoint
+- es: 98.4% disjoint
+- hr: 98.6% disjoint
+- hu: 98.8% disjoint
+- nl: 98.8% disjoint
+- pl: 99.3% disjoint
+- pt: 97.3% disjoint
+- ro: 99.5% disjoint
+- ru: 97.6% disjoint
+- sk: 97.8% disjoint
+- sl: 98.9% disjoint
+- uk: 98.0% disjoint
+- zh: 94.7% disjoint
+
 ## Final Counts per Cluster x Split x Class
 | Cluster | Split | Max/Min Ratio | Counts |
 |---|---|---|---|
@@ -75,15 +120,19 @@ Macro-F1 (chance ~ 0.125) on val and test sets using simple shortcut features.
 To regenerate these splits and evaluate the baselines:
 
 ```bash
-# Verify leakage assumptions
-python scripts/check_leakage.py
-
-# Rebuild the dataset splits
+# 1. Rebuild the dataset splits and initial story groups
 python scripts/build_splits.py
 
-# Run cross-split similarity
+# 2. Add script-aware junk flags and story-disjoint similarity flags
+python scripts/add_flags_and_similarity.py
+
+# 3. Verify leakage assumptions and run cross-split similarity
+python scripts/check_leakage.py
 python scripts/cross_split_similarity.py
 
-# Run shortcut baselines
+# 4. Generate story group statistics
+python scripts/report_stats.py
+
+# 5. Run shortcut baselines
 python scripts/shortcut_baselines.py
 ```
