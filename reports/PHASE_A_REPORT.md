@@ -77,3 +77,60 @@ Output of `git status -sb` after cleanup:
 Output of `git diff --name-status --diff-filter=D main..phase-a` (Empty as requested):
 ```
 ```
+
+## Kaggle Dependencies
+The required ML dependencies were compared against `notebooks/kaggle/KAGGLE_PIP_FREEZE.txt`:
+- `torch` was NOT listed in the Kaggle freeze file, so it remains pinned at `2.5.1`.
+- `transformers` was downgraded from `5.14.1` to `5.0.0`.
+- `peft` was downgraded from `0.20.0` to `0.19.1`.
+
+This downgrade was successfully installed in `.venv` and did **not** break `pytest`.
+
+### Diff of pinning changes:
+```diff
+diff --git a/backend/requirements.txt b/backend/requirements.txt
+--- a/backend/requirements.txt
++++ b/backend/requirements.txt
+@@ -1,8 +1,8 @@
+ fastapi==0.142.2
+ uvicorn==0.54.0
+ pydantic==2.13.4
+-transformers==5.14.1
+-peft==0.20.0
++transformers==5.0.0
++peft==0.19.1
+ torch==2.5.1
+ accelerate==1.14.0
+ scikit-learn==1.7.2
+diff --git a/requirements.txt b/requirements.txt
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,6 +1,6 @@
+ torch==2.5.1
+-transformers==5.14.1
+-peft==0.20.0
++transformers==5.0.0
++peft==0.19.1
+ datasets==5.0.1
+ accelerate==1.14.0
+ scikit-learn==1.7.2
+```
+
+### PyTest Output post-downgrade
+```
+============================= test session starts =============================
+platform win32 -- Python 3.10.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\dev\multilingual-aa-sfaca
+plugins: anyio-4.15.1, platformdirs-4.12.2
+collected 21 items
+
+tests\test_inference.py .....................                            [100%]
+
+============================== warnings summary ===============================
+app.py:169
+  C:\dev\multilingual-aa-sfaca\app.py:169: UserWarning: The parameters have been moved from the Blocks constructor to the launch() method in Gradio 6.0: theme. Please pass these parameters to launch() instead.
+    with gr.Blocks(theme=custom_theme, title="SFA-CA Multilingual AI Text Attribution System") as app:
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 21 passed, 1 warning in 21.02s ========================
+```
