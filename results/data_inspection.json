@@ -1,3 +1,640 @@
 {
-  "error": "Data file missing"
+  "row_count": 206330,
+  "columns": [
+    "Unnamed: 0",
+    "text",
+    "label",
+    "multi_label",
+    "split",
+    "language",
+    "length",
+    "source"
+  ],
+  "crosstab": [
+    {
+      "cluster": "arabic",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "test",
+      "count": 295
+    },
+    {
+      "cluster": "arabic",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "train",
+      "count": 987
+    },
+    {
+      "cluster": "arabic",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "arabic",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "train",
+      "count": 999
+    },
+    {
+      "cluster": "arabic",
+      "label": "aya-101",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "arabic",
+      "label": "aya-101",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "arabic",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "arabic",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "arabic",
+      "label": "human",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "arabic",
+      "label": "human",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "arabic",
+      "label": "opt-iml-max-30b",
+      "split": "test",
+      "count": 298
+    },
+    {
+      "cluster": "arabic",
+      "label": "opt-iml-max-30b",
+      "split": "train",
+      "count": 992
+    },
+    {
+      "cluster": "arabic",
+      "label": "v5-Eagle-7B-HF",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "arabic",
+      "label": "v5-Eagle-7B-HF",
+      "split": "train",
+      "count": 999
+    },
+    {
+      "cluster": "arabic",
+      "label": "vicuna-13b",
+      "split": "test",
+      "count": 299
+    },
+    {
+      "cluster": "arabic",
+      "label": "vicuna-13b",
+      "split": "train",
+      "count": 998
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "test",
+      "count": 871
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "train",
+      "count": 2903
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "test",
+      "count": 899
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "train",
+      "count": 2999
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "aya-101",
+      "split": "test",
+      "count": 900
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "aya-101",
+      "split": "train",
+      "count": 3000
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "test",
+      "count": 900
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "train",
+      "count": 2999
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "human",
+      "split": "test",
+      "count": 898
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "human",
+      "split": "train",
+      "count": 2996
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "opt-iml-max-30b",
+      "split": "test",
+      "count": 890
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "opt-iml-max-30b",
+      "split": "train",
+      "count": 2958
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "v5-Eagle-7B-HF",
+      "split": "test",
+      "count": 896
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "v5-Eagle-7B-HF",
+      "split": "train",
+      "count": 2991
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "vicuna-13b",
+      "split": "test",
+      "count": 899
+    },
+    {
+      "cluster": "cyrillic",
+      "label": "vicuna-13b",
+      "split": "train",
+      "count": 2992
+    },
+    {
+      "cluster": "greek",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "test",
+      "count": 296
+    },
+    {
+      "cluster": "greek",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "train",
+      "count": 974
+    },
+    {
+      "cluster": "greek",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "test",
+      "count": 299
+    },
+    {
+      "cluster": "greek",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "train",
+      "count": 998
+    },
+    {
+      "cluster": "greek",
+      "label": "aya-101",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "greek",
+      "label": "aya-101",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "greek",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "greek",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "train",
+      "count": 999
+    },
+    {
+      "cluster": "greek",
+      "label": "human",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "greek",
+      "label": "human",
+      "split": "train",
+      "count": 998
+    },
+    {
+      "cluster": "greek",
+      "label": "opt-iml-max-30b",
+      "split": "test",
+      "count": 295
+    },
+    {
+      "cluster": "greek",
+      "label": "opt-iml-max-30b",
+      "split": "train",
+      "count": 985
+    },
+    {
+      "cluster": "greek",
+      "label": "v5-Eagle-7B-HF",
+      "split": "test",
+      "count": 299
+    },
+    {
+      "cluster": "greek",
+      "label": "v5-Eagle-7B-HF",
+      "split": "train",
+      "count": 997
+    },
+    {
+      "cluster": "greek",
+      "label": "vicuna-13b",
+      "split": "test",
+      "count": 295
+    },
+    {
+      "cluster": "greek",
+      "label": "vicuna-13b",
+      "split": "train",
+      "count": 993
+    },
+    {
+      "cluster": "hanzi",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "test",
+      "count": 296
+    },
+    {
+      "cluster": "hanzi",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "train",
+      "count": 962
+    },
+    {
+      "cluster": "hanzi",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "hanzi",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "train",
+      "count": 999
+    },
+    {
+      "cluster": "hanzi",
+      "label": "aya-101",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "hanzi",
+      "label": "aya-101",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "hanzi",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "test",
+      "count": 295
+    },
+    {
+      "cluster": "hanzi",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "train",
+      "count": 987
+    },
+    {
+      "cluster": "hanzi",
+      "label": "human",
+      "split": "test",
+      "count": 300
+    },
+    {
+      "cluster": "hanzi",
+      "label": "human",
+      "split": "train",
+      "count": 1000
+    },
+    {
+      "cluster": "hanzi",
+      "label": "opt-iml-max-30b",
+      "split": "test",
+      "count": 297
+    },
+    {
+      "cluster": "hanzi",
+      "label": "opt-iml-max-30b",
+      "split": "train",
+      "count": 992
+    },
+    {
+      "cluster": "hanzi",
+      "label": "v5-Eagle-7B-HF",
+      "split": "test",
+      "count": 299
+    },
+    {
+      "cluster": "hanzi",
+      "label": "v5-Eagle-7B-HF",
+      "split": "train",
+      "count": 997
+    },
+    {
+      "cluster": "hanzi",
+      "label": "vicuna-13b",
+      "split": "test",
+      "count": 296
+    },
+    {
+      "cluster": "hanzi",
+      "label": "vicuna-13b",
+      "split": "train",
+      "count": 989
+    },
+    {
+      "cluster": "latin",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "test",
+      "count": 4374
+    },
+    {
+      "cluster": "latin",
+      "label": "Llama-2-70b-chat-hf",
+      "split": "train",
+      "count": 13271
+    },
+    {
+      "cluster": "latin",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "test",
+      "count": 4500
+    },
+    {
+      "cluster": "latin",
+      "label": "Mistral-7B-Instruct-v0.2",
+      "split": "train",
+      "count": 13644
+    },
+    {
+      "cluster": "latin",
+      "label": "aya-101",
+      "split": "test",
+      "count": 4498
+    },
+    {
+      "cluster": "latin",
+      "label": "aya-101",
+      "split": "train",
+      "count": 13650
+    },
+    {
+      "cluster": "latin",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "test",
+      "count": 4500
+    },
+    {
+      "cluster": "latin",
+      "label": "gpt-3.5-turbo-0125",
+      "split": "train",
+      "count": 13655
+    },
+    {
+      "cluster": "latin",
+      "label": "human",
+      "split": "test",
+      "count": 4499
+    },
+    {
+      "cluster": "latin",
+      "label": "human",
+      "split": "train",
+      "count": 13654
+    },
+    {
+      "cluster": "latin",
+      "label": "opt-iml-max-30b",
+      "split": "test",
+      "count": 4430
+    },
+    {
+      "cluster": "latin",
+      "label": "opt-iml-max-30b",
+      "split": "train",
+      "count": 13431
+    },
+    {
+      "cluster": "latin",
+      "label": "v5-Eagle-7B-HF",
+      "split": "test",
+      "count": 4488
+    },
+    {
+      "cluster": "latin",
+      "label": "v5-Eagle-7B-HF",
+      "split": "train",
+      "count": 13626
+    },
+    {
+      "cluster": "latin",
+      "label": "vicuna-13b",
+      "split": "test",
+      "count": 4489
+    },
+    {
+      "cluster": "latin",
+      "label": "vicuna-13b",
+      "split": "train",
+      "count": 13626
+    }
+  ],
+  "length_stats": {
+    "cyrillic": {
+      "mean_char": 744.384337388274,
+      "mean_tok": 182.09589880933174,
+      "pct_exceed_128": 69.92029944177341
+    },
+    "latin": {
+      "mean_char": 937.4586621401601,
+      "mean_tok": 231.10407732012334,
+      "pct_exceed_128": 81.06696227526241
+    },
+    "hanzi": {
+      "mean_char": 165.21088369385973,
+      "mean_tok": 92.05917159763314,
+      "pct_exceed_128": 26.423513434862738
+    },
+    "greek": {
+      "mean_char": 490.13545701006973,
+      "mean_tok": 134.13235863671574,
+      "pct_exceed_128": 44.04531371030209
+    },
+    "arabic": {
+      "mean_char": 509.02749107745734,
+      "mean_tok": 140.53612424037811,
+      "pct_exceed_128": 53.188000385839686
+    }
+  },
+  "source_counts": {
+    "MULTITuDE_MassiveSumm_dw": 20306,
+    "MULTITuDE_MassiveSumm_dnevnik": 15002,
+    "MULTITuDE_MassiveSumm_globalvoices": 14335,
+    "MULTITuDE_MassiveSumm_bbc": 13942,
+    "MULTITuDE_MassiveSumm_voanews": 12181,
+    "MULTITuDE_MassiveSumm_rfi": 9300,
+    "MULTITuDE_MassiveSumm_denik": 9051,
+    "MULTITuDE_MassiveSumm_sme": 9031,
+    "MULTITuDE_MassiveSumm_dziennik": 6079,
+    "MULTITuDE_MassiveSumm_24": 4827,
+    "MULTITuDE_MassiveSumm_welt": 4554,
+    "MULTITuDE_MassiveSumm_20minutos": 4327,
+    "MULTITuDE_MassiveSumm_index": 4222,
+    "MULTITuDE_MassiveSumm_rt": 4161,
+    "MULTITuDE_MassiveSumm_rte": 4121,
+    "MULTITuDE_MassiveSumm_eleftherostypos": 3629,
+    "MassiveSumm_dw": 2921,
+    "MULTITuDE_MassiveSumm_rp": 2853,
+    "MULTITuDE_MassiveSumm_unian": 2761,
+    "MULTITuDE_MassiveSumm_voaportugues": 2559,
+    "MULTITuDE_MassiveSumm_gazeta": 2452,
+    "MULTITuDE_MassiveSumm_ria": 2423,
+    "MassiveSumm_dnevnik": 2157,
+    "MULTITuDE_MassiveSumm_eremnews": 2129,
+    "MassiveSumm_globalvoices": 2059,
+    "MassiveSumm_bbc": 2013,
+    "MassiveSumm_voanews": 1752,
+    "MULTITuDE_MassiveSumm_delo": 1717,
+    "MULTITuDE_MassiveSumm_acorianooriental": 1610,
+    "MULTITuDE_MassiveSumm_kathimerini": 1516,
+    "MULTITuDE_MassiveSumm_spiegel": 1454,
+    "MassiveSumm_rfi": 1343,
+    "MassiveSumm_sme": 1300,
+    "MassiveSumm_denik": 1300,
+    "MULTITuDE_MassiveSumm_tass": 1248,
+    "MULTITuDE_MassiveSumm_dnes": 1236,
+    "MULTITuDE_MassiveSumm_alwafd": 1230,
+    "MULTITuDE_MassiveSumm_aljazeera": 1218,
+    "MULTITuDE_MassiveSumm_mk": 1188,
+    "MULTITuDE_MassiveSumm_elpais": 1157,
+    "MULTITuDE_MassiveSumm_meinbezirk": 1156,
+    "MULTITuDE_MassiveSumm_vesti": 1089,
+    "MULTITuDE_MassiveSumm_aawsat": 1048,
+    "MULTITuDE_MassiveSumm_voachinese": 956,
+    "MULTITuDE_MassiveSumm_interfax": 925,
+    "MULTITuDE_MassiveSumm_tanea": 887,
+    "MassiveSumm_dziennik": 877,
+    "MULTITuDE_MassiveSumm_rbc": 873,
+    "MULTITuDE_MassiveSumm_publico": 859,
+    "MULTITuDE_MassiveSumm_pravda": 846,
+    "MULTITuDE_MassiveSumm_n-tv": 839,
+    "MULTITuDE_MassiveSumm_faz": 750,
+    "MassiveSumm_24": 693,
+    "MassiveSumm_welt": 656,
+    "MassiveSumm_20minutos": 623,
+    "MassiveSumm_index": 607,
+    "MULTITuDE_MassiveSumm_rtve": 600,
+    "MassiveSumm_rt": 597,
+    "MassiveSumm_rte": 593,
+    "MULTITuDE_MassiveSumm_kyiv": 591,
+    "MassiveSumm_eleftherostypos": 522,
+    "MULTITuDE_MassiveSumm_ren": 450,
+    "MassiveSumm_rp": 409,
+    "MassiveSumm_unian": 395,
+    "MassiveSumm_voaportugues": 367,
+    "MassiveSumm_gazeta": 351,
+    "MassiveSumm_ria": 349,
+    "MassiveSumm_eremnews": 306,
+    "MULTITuDE_MassiveSumm_tovima": 299,
+    "MassiveSumm_delo": 247,
+    "MassiveSumm_acorianooriental": 231,
+    "MassiveSumm_kathimerini": 218,
+    "MassiveSumm_spiegel": 209,
+    "MassiveSumm_tass": 179,
+    "MassiveSumm_dnes": 178,
+    "MassiveSumm_alwafd": 176,
+    "MassiveSumm_aljazeera": 175,
+    "MassiveSumm_mk": 171,
+    "MULTITuDE_MassiveSumm_golosameriki": 167,
+    "MassiveSumm_meinbezirk": 166,
+    "MassiveSumm_elpais": 166,
+    "MassiveSumm_vesti": 157,
+    "MassiveSumm_aawsat": 150,
+    "MULTITuDE_MassiveSumm_golem": 140,
+    "MassiveSumm_voachinese": 137,
+    "MassiveSumm_interfax": 133,
+    "MassiveSumm_tanea": 127,
+    "MassiveSumm_rbc": 126,
+    "MassiveSumm_publico": 123,
+    "MassiveSumm_pravda": 122,
+    "MassiveSumm_n-tv": 120,
+    "MassiveSumm_faz": 108,
+    "MassiveSumm_rtve": 87,
+    "MassiveSumm_kyiv": 85,
+    "MassiveSumm_ren": 65,
+    "MULTITuDE_MassiveSumm_mos": 49,
+    "MassiveSumm_tovima": 42,
+    "MassiveSumm_golosameriki": 24,
+    "MassiveSumm_golem": 20,
+    "MULTITuDE_MassiveSumm_amerikaninsesi": 14,
+    "MULTITuDE_MassiveSumm_prin": 7,
+    "MULTITuDE_MassiveSumm_avgi": 7,
+    "MassiveSumm_mos": 7,
+    "MULTITuDE_MassiveSumm_voacantonese": 7,
+    "MULTITuDE_MassiveSumm_stoxos": 7,
+    "MassiveSumm_amerikaninsesi": 2,
+    "MassiveSumm_stoxos": 1,
+    "MassiveSumm_voacantonese": 1,
+    "MassiveSumm_prin": 1,
+    "MassiveSumm_avgi": 1
+  },
+  "duplicates": {
+    "exact_dupes": 0,
+    "near_dupes": 74,
+    "test_in_train_overlap": 17
+  },
+  "gemini_claude_rows": 0
 }
