@@ -50,21 +50,18 @@ app.py:169
   C:\dev\multilingual-aa-sfaca\app.py:169: UserWarning: The parameters have been moved from the Blocks constructor to the launch() method in Gradio 6.0: theme. Please pass these parameters to launch() instead.
     with gr.Blocks(theme=custom_theme, title="SFA-CA Multilingual AI Text Attribution System") as app:
 
-tests/test_inference.py::test_head_isolation
-tests/test_inference.py::test_engine_parity
-  C:\dev\multilingual-aa-sfaca\src\inference.py:110: FutureWarning: You are using `torch.load` with `weights_only=False`...
-
-======================= 21 passed, 3 warnings in 14.49s =======================
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 21 passed, 1 warning in 12.12s ========================
 ```
 
 ## Failure Mode Tracking Table
 
-| ID | Issue | Status |
-|---|---|---|
-| F2 | The wrong adapter/classifier is active for some scripts. | Fixed (via `InferenceEngine` & dynamic `peft` loading) |
-| F6 | Cross-language score contamination (one language affects another). | Fixed (isolated classifier heads `ModuleDict` tested via isolation test) |
-| F7 | API crashing/hanging when `torchao` fails to load. | Fixed (abstracted patch correctly to `src/compat.py`) |
-| F11 | `app.py` duplicate routing logic gets out of sync with `api.py`. | Fixed (centralized into `src/inference.py` and strictly tested) |
+| ID | Issue | Status | Evidence |
+|---|---|---|---|
+| F2 | Shared classifier head overwritten at load | Fixed | `test_head_isolation` proves distinct heads don't contaminate. |
+| F6 | Inference truncation to 256 tokens | Not in this phase | Will be addressed in Phase E. |
+| F7 | `api.py`'s own sanitizer and `[MATH]` placeholder | Not in this phase | `test_sanitizer` captures current broken `[MATH]` behavior. Phase E/F. |
+| F11 | Script router gaps (accents, kana, Hangul, unsupported scripts) | Fixed | `test_router_cases` verifies 16 scripts including Hangul and Hebrew. |
 
 ## Git Status Verification
 

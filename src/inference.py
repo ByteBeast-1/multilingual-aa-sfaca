@@ -107,7 +107,7 @@ class InferenceEngine:
             self.model.backbone.load_adapter(adapter_path, adapter_name=cluster)
             
             if os.path.exists(head_path):
-                head_state = torch.load(head_path, map_location=self.device)
+                head_state = torch.load(head_path, map_location=self.device, weights_only=True)
                 
                 # Clone the base classifier structure
                 head = nn.Sequential(
