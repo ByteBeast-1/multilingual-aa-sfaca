@@ -19,26 +19,7 @@ import torch
 import torch.nn.functional as F
 import pandas as pd
 
-# ── PEFT torchao compatibility patch ──────────────────────────────────────────
-# PEFT 0.19.x raises ImportError when torchao < 0.16.0 (Kaggle locks 0.10.0).
-# Monkey-patch is_torchao_available to return False instead of crashing.
-try:
-    import peft.import_utils as _peft_utils
-    _orig_torchao = _peft_utils.is_torchao_available
-    def _safe_torchao():
-        try:
-            return _orig_torchao()
-        except ImportError:
-            return False
-    _peft_utils.is_torchao_available = _safe_torchao
-    try:
-        import peft.tuners.lora.torchao as _lora_torchao
-        _lora_torchao.is_torchao_available = _safe_torchao
-    except Exception:
-        pass
-except Exception:
-    pass
-# ──────────────────────────────────────────────────────────────────────────────
+
 import plotly.express as px
 import plotly.graph_objects as go
 import gradio as gr
@@ -49,91 +30,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src"
 
 from sanitizer import TextSanitizer, calibrate_probabilities
 from file_parser import parse_uploaded_file
-from clusters import LANG_TO_CLUSTER, all_clusters, nearest_cluster_for_unseen
 from data_loader import ID2LABEL
-from model import SFACAModel
+from inference import InferenceEngine, detect_script_cluster
 
 # Global Model & Tokenizer Singleton
-MODEL_CACHE = {}
+_ENGINE = None
 
-def load_inference_pipeline():
-    if "model" in MODEL_CACHE:
-        return MODEL_CACHE["model"], MODEL_CACHE["tokenizer"]
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Loading SFA-CA Inference Pipeline on device: {device}...")
-
-    tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-large")
-    model = SFACAModel(clusters=all_clusters()).to(device)
-
-    # Load available trained adapters from results/adapters
-    adapters_dir = "results/adapters"
-    if os.path.exists(adapters_dir):
-        from peft import set_peft_model_state_dict
-        for cluster in all_clusters():
-            adapter_path = os.path.join(adapters_dir, cluster)
-            adapter_file = os.path.join(adapter_path, "adapter_model.bin")
-            if os.path.exists(adapter_file):
-                try:
-                    adapter_weights = torch.load(adapter_file, map_location=device)
-                    set_peft_model_state_dict(model.backbone, adapter_weights, adapter_name=cluster)
-                    classifier_path = os.path.join(adapter_path, "classifier.pt")
-                    if os.path.exists(classifier_path):
-                        model.classifier.load_state_dict(torch.load(classifier_path, map_location=device))
-                    print(f"  -> Loaded adapter weights for cluster '{cluster}'")
-                except Exception as e:
-                    print(f"  -> Note: Adapter '{cluster}' loaded with base weights ({e})")
-
-    model.eval()
-    MODEL_CACHE["model"] = model
-    MODEL_CACHE["tokenizer"] = tokenizer
-    MODEL_CACHE["device"] = device
-    return model, tokenizer
-
-
-def detect_script_family(text: str) -> Tuple[str, str]:
-    """
-    Detects script family cluster by inspecting Unicode ranges of characters.
-    """
-    if not text:
-        return "Latin", "latin"
-
-    # Unicode Character Count Heuristics
-    cyrillic_chars = len(re.findall(r"[\u0400-\u04FF]", text))
-    greek_chars = len(re.findall(r"[\u0370-\u03FF]", text))
-    arabic_chars = len(re.findall(r"[\u0600-\u06FF]", text))
-    hanzi_chars = len(re.findall(r"[\u4E00-\u9FFF]", text))
-    latin_chars = len(re.findall(r"[a-zA-Z]", text))
-
-    counts = {
-        "cyrillic": cyrillic_chars,
-        "greek": greek_chars,
-        "arabic": arabic_chars,
-        "hanzi": hanzi_chars,
-        "latin": latin_chars
-    }
-
-    best_script = max(counts, key=counts.get)
-    if counts[best_script] == 0:
-        best_script = "latin"
-
-    display_name = {
-        "latin": "Latin Script (English, Spanish, German, French, etc.)",
-        "cyrillic": "Cyrillic Script (Russian, Ukrainian, Bulgarian)",
-        "greek": "Greek Script (Hellenic)",
-        "arabic": "Arabic / Semitic Script (Arabic, Persian, Urdu)",
-        "hanzi": "CJK / Hanzi Script (Chinese, Japanese, Korean)",
-    }.get(best_script, "Latin Script")
-
-    return display_name, best_script
+def get_engine():
+    global _ENGINE
+    if _ENGINE is None:
+        _ENGINE = InferenceEngine()
+        _ENGINE.load_from_dir()
+    return _ENGINE
 
 
 def analyze_text_attribution(raw_input_text: str, uploaded_file=None):
     """
     Main Analysis Function invoked by Gradio UI.
     """
-    model, tokenizer = load_inference_pipeline()
-    device = MODEL_CACHE["device"]
+    engine = get_engine()
 
     try:
         # 1. Parse File Upload if provided
@@ -155,25 +70,18 @@ def analyze_text_attribution(raw_input_text: str, uploaded_file=None):
         clean_text, meta = sanitizer.sanitize(text_content)
 
         # 3. Detect Script Cluster & Activate Adapter
-        script_display, active_cluster = detect_script_family(clean_text)
+        active_cluster = detect_script_cluster(clean_text)
+        script_display = {
+            "latin": "Latin Script (English, Spanish, German, French, etc.)",
+            "cyrillic": "Cyrillic Script (Russian, Ukrainian, Bulgarian)",
+            "greek": "Greek Script (Hellenic)",
+            "arabic": "Arabic / Semitic Script (Arabic, Persian, Urdu)",
+            "hanzi": "CJK / Hanzi Script (Chinese, Japanese, Korean)",
+        }.get(active_cluster, "Latin Script")
 
-        # 4. Tokenize & Model Forward Pass
-        inputs = tokenizer(
-            clean_text,
-            truncation=True,
-            max_length=256,
-            padding="max_length",
-            return_tensors="pt"
-        ).to(device)
-
-        use_amp = (device.type == "cuda")
-        with torch.no_grad():
-            with torch.amp.autocast("cuda", enabled=use_amp):
-                logits = model(inputs["input_ids"], inputs["attention_mask"], active_cluster)
-                raw_probs = F.softmax(logits, dim=1).squeeze(0).cpu().numpy()
-
-        # Build Class Probabilities Map
-        class_probs = {ID2LABEL.get(i, f"Author_{i}"): float(raw_probs[i]) for i in range(len(raw_probs))}
+        # 4. Model Forward Pass
+        result = engine.predict(clean_text, active_cluster)
+        class_probs = result["probabilities"]
 
         # 5. Apply Math Notation Confidence Calibration
         calibrated_probs = calibrate_probabilities(class_probs, meta["ndi"], human_class="human")

@@ -7,3 +7,4 @@ results/
 .ipynb_checkpoints/
 read_docx.py
 Project_Report_Script_Family_Adapters.txt
+.venv/

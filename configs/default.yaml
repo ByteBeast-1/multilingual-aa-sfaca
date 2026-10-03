@@ -1,0 +1,11 @@
+backbone: "xlm-roberta-large"
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.1
+learning_rate: 2.0e-5
+epochs: 5
+max_length: 128 # TODO-verify against my Kaggle training value
+batch_size: 16
+seed: 42
+contrastive_weight: 0.5
+temperature: 0.05
