@@ -39,7 +39,8 @@ _ENGINE = None
 def get_engine():
     global _ENGINE
     if _ENGINE is None:
-        _ENGINE = InferenceEngine(use_stub=False)
+        _ENGINE = InferenceEngine()
+        _ENGINE.load_from_dir()
     return _ENGINE
 
 

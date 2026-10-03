@@ -11,13 +11,9 @@ from model import SFACAModel, build_tokenizer
 from clusters import all_clusters
 from data_loader import ID2LABEL
 
-def detect_script_cluster(text: str) -> str:
-    """
-    Detects script family cluster by inspecting Unicode ranges of characters.
-    Handles Japanese kana and Persian/Urdu explicitly.
-    """
+def detect_script(text: str) -> dict:
     if not text:
-        return "latin"
+        return {"cluster": "latin", "counts": {}, "routing_confidence": 0.0, "mixed": False, "supported": False}
 
     # Unicode-block based counts, ignoring digits, punctuation, etc.
     cyrillic = len(re.findall(r"[\u0400-\u04FF\u0500-\u052F]", text))
@@ -26,44 +22,75 @@ def detect_script_cluster(text: str) -> str:
     hanzi = len(re.findall(r"[\u4E00-\u9FFF]", text))
     kana = len(re.findall(r"[\u3040-\u309F\u30A0-\u30FF]", text))
     latin = len(re.findall(r"[\u0041-\u005A\u0061-\u007A\u00C0-\u024F\u1E00-\u1EFF]", text))
+    hangul = len(re.findall(r"[\uAC00-\uD7AF\u1100-\u11FF]", text))
+    hebrew = len(re.findall(r"[\u0590-\u05FF]", text))
+    devanagari = len(re.findall(r"[\u0900-\u097F]", text))
 
     counts = {
         "cyrillic": cyrillic,
         "greek": greek,
         "arabic": arabic,
-        "hanzi": hanzi + kana,  # Map Japanese kana to nearest cluster (Hanzi)
-        "latin": latin
+        "hanzi": hanzi + kana + hangul,  # Map Japanese/Korean to nearest cluster (Hanzi)
+        "latin": latin,
+        "unsupported": hebrew + devanagari
     }
 
+    # Filter out empty clusters
+    active_counts = {k: v for k, v in counts.items() if v > 0}
+    total = sum(active_counts.values())
+    
+    if total == 0:
+        return {"cluster": "latin", "counts": {}, "routing_confidence": 0.0, "mixed": False, "supported": False}
+
     best = max(counts, key=counts.get)
-    return best if counts[best] > 0 else "latin"
+    supported = (best != "unsupported")
+    routing_confidence = counts[best] / total
+    mixed = len([c for c, v in active_counts.items() if c != "unsupported"]) > 1
+    
+    if not supported:
+        best = "latin"
+        
+    return {
+        "cluster": best,
+        "counts": active_counts,
+        "routing_confidence": round(routing_confidence, 4),
+        "mixed": mixed,
+        "supported": supported
+    }
+
+def detect_script_cluster(text: str) -> str:
+    """
+    Wrapper for detect_script that returns only the cluster string.
+    """
+    return detect_script(text)["cluster"]
+
 
 class InferenceEngine:
-    def __init__(self, use_stub=False):
-        config_path = os.path.join(os.path.dirname(__file__), "..", "configs", "default.yaml")
-        with open(config_path, "r") as f:
-            self.config = yaml.safe_load(f)
+    def __init__(self, config=None, tokenizer=None, model=None, classifiers=None, device=None):
+        if config is None:
+            config_path = os.path.join(os.path.dirname(__file__), "..", "configs", "default.yaml")
+            with open(config_path, "r") as f:
+                self.config = yaml.safe_load(f)
+        else:
+            self.config = config
             
         self.max_length = self.config.get("max_length", 128)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.clusters = all_clusters()
-        self.use_stub = use_stub
         
-        self.tokenizer = None
-        self.backbone = None
-        self.classifiers = nn.ModuleDict()
-        
-        if not self.use_stub:
-            self._load_model()
+        self.tokenizer = tokenizer
+        self.model = model
+        self.classifiers = classifiers if classifiers is not None else nn.ModuleDict()
 
-    def _load_model(self):
-        adapter_dir = os.environ.get("ADAPTER_DIR")
+    def load_from_dir(self, adapter_dir=None):
+        if adapter_dir is None:
+            adapter_dir = os.environ.get("ADAPTER_DIR")
         if not adapter_dir:
             raise ValueError("ADAPTER_DIR environment variable must be set to load models.")
             
-        self.tokenizer = build_tokenizer(self.config["backbone"])
+        self.tokenizer = build_tokenizer(self.config.get("backbone", "xlm-roberta-large"))
         self.model = SFACAModel(
-            backbone_name=self.config["backbone"],
+            backbone_name=self.config.get("backbone", "xlm-roberta-large"),
             num_classes=len(ID2LABEL),
             clusters=self.clusters
         )
@@ -90,6 +117,7 @@ class InferenceEngine:
                     nn.Linear(self.model.classifier[3].in_features, self.model.classifier[3].out_features)
                 )
                 head.load_state_dict(head_state)
+                head.eval()
                 self.classifiers[cluster] = head
             else:
                 print(f"Warning: Missing classifier head for '{cluster}' at {head_path}")
@@ -98,12 +126,8 @@ class InferenceEngine:
         self.model.eval()
 
     def predict(self, text: str, cluster: str):
-        if self.use_stub:
-            # Deterministic stub output for testing
-            import hashlib
-            h = int(hashlib.md5(text.encode()).hexdigest(), 16)
-            human_prob = (h % 100) / 100.0
-            return {"human": human_prob, "ai": 1.0 - human_prob, "generator": "Stub-LLM", "generator_prob": 1.0 - human_prob}
+        if self.model is None or self.tokenizer is None:
+             raise RuntimeError("Model and tokenizer not loaded. Call load_from_dir() first or provide them.")
 
         if cluster not in self.classifiers:
             raise ValueError(f"No classifier head loaded for cluster '{cluster}'.")
@@ -114,16 +138,22 @@ class InferenceEngine:
             max_length=self.max_length,
             truncation=True,
             padding=True,
-        ).to(self.device)
+        )
+        if hasattr(enc, "to"):
+            enc = enc.to(self.device)
+        else:
+            enc = {k: v.to(self.device) if hasattr(v, "to") else v for k, v in enc.items()}
 
         with torch.no_grad():
             self.model.set_active_cluster(cluster)
             outputs = self.model.backbone(input_ids=enc["input_ids"], attention_mask=enc["attention_mask"])
             pooled = outputs.last_hidden_state[:, 0, :]
             
-            # Use the cluster-specific head!
             logits = self.classifiers[cluster](pooled)
             probs = torch.nn.functional.softmax(logits, dim=-1).squeeze().cpu().tolist()
+            # If batch size was 1, probs is a list. But if we passed single text, it's 1D.
+            if isinstance(probs, float):  # Fallback for 1-class
+                probs = [probs]
 
         prob_dict = {ID2LABEL[i]: round(float(p), 4) for i, p in enumerate(probs)}
         human_prob = prob_dict.get("human", 0.0)
@@ -138,5 +168,6 @@ class InferenceEngine:
             "ai": ai_prob,
             "generator": top_gen,
             "generator_prob": round(top_gen_prob, 4),
-            "probabilities": prob_dict
+            "probabilities": prob_dict,
+            "logits": logits.squeeze().cpu().tolist()
         }

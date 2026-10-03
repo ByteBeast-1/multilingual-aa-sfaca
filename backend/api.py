@@ -37,7 +37,8 @@ def _load_model():
         return
 
     print("[SFA-CA] Loading Inference Engine...")
-    _ENGINE = InferenceEngine(use_stub=False)
+    _ENGINE = InferenceEngine()
+    _ENGINE.load_from_dir()
     print("[SFA-CA] Model ready.")
 
 @asynccontextmanager
