@@ -51,6 +51,7 @@ def measure_leakage():
     vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), max_features=10000)
 
     test_to_train_high_flags = []
+    stats_data = []
     
     for lang in df['language'].unique():
         lang_df = df[df['language'] == lang].copy()
@@ -119,14 +120,54 @@ def measure_leakage():
         
         report.append(format_stats(rand_val_sims, lang, 'val->train (random)'))
         report.append(format_stats(rand_test_sims, lang, 'test->train (random)'))
+
+        if len(val_sims) > 0 and len(rand_val_sims) > 0:
+            val_lt_rand = val_sims.mean() < rand_val_sims.mean()
+        else:
+            val_lt_rand = False
+            
+        if len(test_sims) > 0 and len(rand_test_sims) > 0:
+            test_lt_rand = test_sims.mean() < rand_test_sims.mean()
+        else:
+            test_lt_rand = False
+
+        if len(val_sims) > 0 and len(test_sims) > 0:
+            val_gt_test = val_sims.mean() > test_sims.mean()
+        else:
+            val_gt_test = False
+            
+        if len(test_sims) > 0:
+            test_gt_07 = (test_sims > 0.7).mean() * 100
+        else:
+            test_gt_07 = 0.0
+            
+        stats_data.append({
+            'lang': lang,
+            'val_lt_rand': val_lt_rand,
+            'test_lt_rand': test_lt_rand,
+            'val_gt_test': val_gt_test,
+            'test_gt_07': test_gt_07,
+            'val_mean': val_sims.mean() if len(val_sims) > 0 else 0,
+            'rand_val_mean': rand_val_sims.mean() if len(rand_val_sims) > 0 else 0
+        })
         
     report.append("\n## Conclusion\n")
-    if test_to_train_high_flags:
-        report.append(f"**Test->Train similarity is HIGH** for languages: {', '.join(test_to_train_high_flags)}. This indicates that the benchmark's original test split shares story groups with the train split, meaning the benchmark itself leaks stories across its splits.")
-    else:
-        report.append("**Test->Train similarity is NOT high**. The benchmark test set appears well-separated.")
+    
+    val_lt_rand_count = sum(1 for s in stats_data if s['val_lt_rand'])
+    test_lt_rand_count = sum(1 for s in stats_data if s['test_lt_rand'])
+    val_gt_test_count = sum(1 for s in stats_data if s['val_gt_test'])
+    
+    report.append(f"- **Val actual < Random control**: {val_lt_rand_count} out of {len(stats_data)} languages.")
+    report.append(f"- **Test actual < Random control**: {test_lt_rand_count} out of {len(stats_data)} languages.")
+    report.append(f"- **Val->train > Test->train similarity**: {val_gt_test_count} out of {len(stats_data)} languages.")
+    
+    report.append("\n### Per-language share of test rows with similarity above 0.7:")
+    for s in stats_data:
+        report.append(f"- {s['lang']}: {s['test_gt_07']:.1f}%")
         
-    report.append("\nThe actual val->train similarity should be significantly lower than the random val->train similarity, demonstrating that the grouped splitting successfully prevented story leakage into the validation set.")
+    val_more_leaky_langs = [s['lang'] for s in stats_data if s['val_mean'] > s['rand_val_mean']]
+    if val_more_leaky_langs:
+        report.append(f"\nLanguages where val is more similar than the random control: {', '.join(val_more_leaky_langs)}")
     
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(report))
