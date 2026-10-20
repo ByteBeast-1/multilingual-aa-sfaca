@@ -16,6 +16,8 @@ MULTITuDE v3 from Zenodo -- the base paper's repo
 (github.com/MLNTeam-Unical/Multilingual-MGT-AA) shows their exact schema.
 """
 
+import hashlib
+import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from clusters import get_cluster, all_clusters, BASE_PAPER_18_LANGUAGES
@@ -105,23 +107,130 @@ def filter_by_languages(df: pd.DataFrame, langs: list) -> pd.DataFrame:
     return df[df["language"].isin(langs)].reset_index(drop=True)
 
 
+FROZEN_SPLITS_SHA256 = "8c05df8355c44611b05aa290c6644f822436734a74da278f65da1c91f370cf0b"
+
+LABEL_LIST_8CLASS = [
+    "human",
+    "Llama-2-70b-chat-hf",
+    "Mistral-7B-Instruct-v0.2",
+    "aya-101",
+    "gpt-3.5-turbo-0125",
+    "opt-iml-max-30b",
+    "v5-Eagle-7B-HF",
+    "vicuna-13b",
+]
+LABEL2ID_8CLASS = {lbl: i for i, lbl in enumerate(LABEL_LIST_8CLASS)}
+ID2LABEL_8CLASS = {i: lbl for i, lbl in enumerate(LABEL_LIST_8CLASS)}
+
+
+def compute_file_sha256(filepath: str) -> str:
+    h = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while chunk := f.read(8192 * 1024):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def load_training_table(
+    raw_path: str = "data/raw/multitude_v3_clean.csv",
+    splits_path: str = "data/processed/splits_8class.csv",
+    allow_new_splits: bool = False,
+) -> tuple[pd.DataFrame, str]:
+    """
+    Loads raw CSV and splits CSV joined on row_id (verifying row_id equals Unnamed: 0).
+    Verifies SHA-256 of splits_path against FROZEN_SPLITS_SHA256 unless allow_new_splits=True.
+    Returns (merged_df, splits_sha256).
+    """
+    splits_hash = compute_file_sha256(splits_path)
+    if splits_hash != FROZEN_SPLITS_SHA256 and not allow_new_splits:
+        raise ValueError(
+            f"Frozen splits SHA-256 mismatch!\nExpected: {FROZEN_SPLITS_SHA256}\nFound:    {splits_hash}\n"
+            f"Pass --allow_new_splits to override."
+        )
+
+    splits_df = pd.read_csv(splits_path)
+    raw_df = pd.read_csv(raw_path)
+
+    if "Unnamed: 0" not in raw_df.columns:
+        raise ValueError("raw CSV must contain 'Unnamed: 0' column for row indexing.")
+    if "row_id" not in splits_df.columns:
+        raise ValueError("splits CSV must contain 'row_id' column.")
+
+    raw_df = raw_df.rename(columns={"Unnamed: 0": "row_id"})
+
+    cols_to_keep = [c for c in raw_df.columns if c not in splits_df.columns or c == "row_id"]
+    merged_df = pd.merge(splits_df, raw_df[cols_to_keep], on="row_id", how="inner")
+
+    if len(merged_df) != len(splits_df):
+        raise ValueError(f"Join mismatch: splits has {len(splits_df)} rows, but joined result has {len(merged_df)} rows.")
+
+    merged_df["label_id"] = merged_df["multi_label"].map(LABEL2ID_8CLASS)
+    if merged_df["label_id"].isna().any():
+        unmapped = merged_df.loc[merged_df["label_id"].isna(), "multi_label"].unique()
+        raise ValueError(f"Unknown multi_label values for 8-class setup: {unmapped}")
+    merged_df["label_id"] = merged_df["label_id"].astype(int)
+
+    return merged_df, splits_hash
+
+
+def stratified_subsample(df: pd.DataFrame, max_samples: int, seed: int = 42) -> pd.DataFrame:
+    """
+    Deterministically subsample df to at most max_samples such that:
+    - Samples are class-stratified (each class count is within 1 of others when data allows).
+    - Result is deterministic given the seed.
+    """
+    if max_samples is None or len(df) <= max_samples:
+        return df.copy()
+
+    rng = np.random.RandomState(seed)
+    classes = sorted(df["label_id"].unique())
+    class_indices = {c: df.index[df["label_id"] == c].tolist() for c in classes}
+    class_sizes = {c: len(idx) for c, idx in class_indices.items()}
+
+    shuffled_indices = {}
+    for c in classes:
+        idx = list(class_indices[c])
+        rng.shuffle(idx)
+        shuffled_indices[c] = idx
+
+    allocated = {c: 0 for c in classes}
+    remaining_budget = max_samples
+
+    while remaining_budget > 0:
+        available_classes = [c for c in classes if allocated[c] < class_sizes[c]]
+        if not available_classes:
+            break
+        for c in available_classes:
+            if remaining_budget == 0:
+                break
+            allocated[c] += 1
+            remaining_budget -= 1
+
+    selected_indices = []
+    for c in classes:
+        selected_indices.extend(shuffled_indices[c][:allocated[c]])
+
+    selected_indices = sorted(selected_indices)
+    return df.loc[selected_indices].copy().reset_index(drop=True)
+
+
 def filter_by_split(df: pd.DataFrame, split_name: str) -> pd.DataFrame:
-    """Keep only rows matching the dataset's own 'train' or 'test' split
-    (MULTITuDE v3 already provides this -- no need to re-split randomly)."""
-    assert split_name in ("train", "test"), "split_name must be 'train' or 'test'"
+    """Keep only rows matching the dataset split ('train', 'val', or 'test')."""
+    assert split_name in ("train", "val", "test"), f"split_name must be 'train', 'val', or 'test', got '{split_name}'"
     return df[df["split"] == split_name].reset_index(drop=True)
 
 
 class AttributionDataset(Dataset):
     """
-    A thin torch Dataset wrapper around a filtered dataframe, ready to
+    A thin torch Dataset wrapper around a dataframe, ready to
     be tokenized on the fly in the training loop.
     """
 
-    def __init__(self, df: pd.DataFrame, tokenizer, max_length: int = 512):
+    def __init__(self, df: pd.DataFrame, tokenizer, max_length: int = 128):
         self.texts = df["text"].tolist()
         self.labels = df["label_id"].tolist()
         self.clusters = df["cluster"].tolist()
+        self.row_ids = df["row_id"].tolist() if "row_id" in df.columns else list(range(len(df)))
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -139,6 +248,7 @@ class AttributionDataset(Dataset):
         item = {k: v.squeeze(0) for k, v in encoding.items()}
         item["labels"] = self.labels[idx]
         item["cluster"] = self.clusters[idx]
+        item["row_id"] = self.row_ids[idx]
         return item
 
 

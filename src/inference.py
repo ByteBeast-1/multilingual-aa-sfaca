@@ -117,12 +117,14 @@ class InferenceEngine:
                     nn.Linear(self.model.classifier[3].in_features, self.model.classifier[3].out_features)
                 )
                 head.load_state_dict(head_state)
+                head.to(self.device)
                 head.eval()
                 self.classifiers[cluster] = head
             else:
                 print(f"Warning: Missing classifier head for '{cluster}' at {head_path}")
                 
         self.model.to(self.device)
+        self.classifiers.to(self.device)
         self.model.eval()
 
     def predict(self, text: str, cluster: str):

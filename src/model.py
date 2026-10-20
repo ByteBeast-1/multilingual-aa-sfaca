@@ -23,7 +23,8 @@ from clusters import all_clusters
 
 
 BACKBONE_NAME = "xlm-roberta-large"  # same backbone as base paper's OTBDetector
-NUM_CLASSES = 10                      # 9 LLM generators (inc. Gemini & Claude) + human
+NUM_CLASSES = 10                      # default / fallback (train.py overrides with 8)
+LORA_TARGET_MODULES = ["query", "value"]  # XLM-RoBERTa attention projections
 
 
 class SFACAModel(nn.Module):
@@ -34,10 +35,13 @@ class SFACAModel(nn.Module):
         lora_r: int = 8,
         lora_alpha: int = 16,
         lora_dropout: float = 0.05,
+        target_modules=None,
         clusters=None,
     ):
         super().__init__()
         self.clusters = clusters or all_clusters()
+        if target_modules is None:
+            target_modules = LORA_TARGET_MODULES
 
         # 1. Load the shared multilingual backbone and freeze it entirely.
         base_model = AutoModel.from_pretrained(backbone_name)
@@ -50,7 +54,7 @@ class SFACAModel(nn.Module):
             r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
-            target_modules=["query", "value"],  # attention projections
+            target_modules=target_modules,  # attention projections
             bias="none",
             use_dora=False,  # Prevents PEFT from probing torchao dispatcher
         )
