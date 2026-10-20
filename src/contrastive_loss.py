@@ -4,11 +4,11 @@ contrastive_loss.py
 Implements the contrastive objective for SFA-CA, adapted from OTBDetector's
 contrastive strategy (La Cava & Tagarelli, EMNLP 2025).
 
-Goal: teach the model that texts from the SAME generator should have
-similar embeddings EVEN ACROSS DIFFERENT SCRIPTS/CLUSTERS, while texts
-from DIFFERENT generators should have different embeddings WITHIN the
-same cluster. This is what should let a Latin-trained notion of
-"what GPT-3.5 sounds like" transfer to Cyrillic or Arabic text.
+In per-cluster training, batches contain texts from a single script/cluster,
+so the contrastive loss operates within that cluster: within a batch, texts
+from the SAME generator are pulled closer, while texts from DIFFERENT generators
+are pushed apart. Note: only in the monolithic multi-cluster baseline (--cluster all)
+do batches mix scripts, producing cross-script contrastive pairs.
 
 We use a standard supervised contrastive loss (SupCon-style): within a
 batch, for each sample, positives are all other samples with the same

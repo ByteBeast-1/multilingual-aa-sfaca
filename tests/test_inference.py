@@ -108,7 +108,7 @@ def test_head_isolation(mock_transformers):
         torch.save(head1.state_dict(), os.path.join(tmpdir, cluster1, "classifier_head.pt"))
         torch.save(head2.state_dict(), os.path.join(tmpdir, cluster2, "classifier_head.pt"))
         
-        engine = InferenceEngine()
+        engine = InferenceEngine(device=torch.device("cpu"))
         engine.load_from_dir(tmpdir)
         
         # The fake backbone returns the exact same hidden state regardless of cluster (because FakePeftModel ignores set_adapter for actual weights).
@@ -142,7 +142,7 @@ def test_engine_parity(mock_transformers):
         model = SFACAModel(clusters=[cluster])
         torch.save(model.classifier.state_dict(), os.path.join(tmpdir, cluster, "classifier_head.pt"))
         
-        engine = InferenceEngine(model=model, tokenizer=FakeTokenizer())
+        engine = InferenceEngine(model=model, tokenizer=FakeTokenizer(), device=torch.device("cpu"))
         # We manually loaded model/tokenizer, now load heads
         engine.load_from_dir(tmpdir)
         
@@ -159,7 +159,7 @@ def test_engine_parity(mock_transformers):
 # ── Error Test ──────────────────────────────────────────────────────────────
 
 def test_missing_adapter_dir():
-    engine = InferenceEngine()
+    engine = InferenceEngine(device=torch.device("cpu"))
     os.environ.pop("ADAPTER_DIR", None)
     with pytest.raises(ValueError, match="ADAPTER_DIR"):
         engine.load_from_dir()
