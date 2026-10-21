@@ -52,7 +52,7 @@ svg text{fill:var(--mut);font-size:10px}
 .note{color:var(--mut);font-size:12.5px;margin-top:6px}
 </style></head>
 <body><div class="wrap">
-<header><span style="font-size:24px" aria-hidden="true">🔎</span><h1>AI Text Attribution</h1></header>
+<header><span style="font-size:24px" aria-hidden="true">🔎</span><h1 style="flex:1">AI Text Attribution</h1><button class="btn ghost" id="theme" style="padding:6px 12px" aria-label="Toggle light/dark theme">◐</button></header>
 <p class="sub">Paste text or upload a file. See the AI / human split, which passages look machine-written, and the most likely generator.</p>
 <div id="banner" class="banner hidden" role="status"></div>
 
@@ -94,6 +94,12 @@ svg text{fill:var(--mut);font-size:10px}
 const API=(window.SFACA_API_URL||"").replace(/\/$/,"");
 const $=s=>document.querySelector(s);
 const esc=t=>t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const NAMES={"human":"Human","Llama-2-70b-chat-hf":"Llama-2 70B","Mistral-7B-Instruct-v0.2":"Mistral 7B","aya-101":"Aya-101","gpt-3.5-turbo-0125":"GPT-3.5 Turbo","opt-iml-max-30b":"OPT-IML 30B","v5-Eagle-7B-HF":"Eagle 7B","vicuna-13b":"Vicuna 13B"};
+const nice=n=>NAMES[n]||n;
+try{const th=localStorage.getItem("theme");if(th)document.documentElement.dataset.theme=th}catch(e){}
+document.addEventListener("DOMContentLoaded",()=>{$("#theme").onclick=()=>{
+  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  const next=dark?"light":"dark";document.documentElement.dataset.theme=next;try{localStorage.setItem("theme",next)}catch(e){}}});
 const SAMPLE="Photosynthesis is the process by which plants convert light into chemical energy. I remember my grandmother watering her tomatoes every dawn, grumbling about the heat. Moreover, it is crucial to understand that this process plays a pivotal role in sustaining life on Earth. The overall reaction can be written as $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$ for the net process. Furthermore, researchers continue to delve into the multifaceted mechanisms that underpin it. Honestly, the lab results we got last week were a mess.";
 let mode="text",file=null;
 
@@ -126,8 +132,8 @@ async function call(path){
   return r;
 }
 async function analyze(){
-  $("#err").textContent="";$("#go").disabled=true;$("#go").textContent="Analyzing…";
-  try{render(await(await call("/api/analyze")).json())}
+  $("#err").textContent="Analyzing… the first request can take a few seconds while the model warms up.";$("#go").disabled=true;$("#go").textContent="Analyzing…";
+  try{render(await(await call("/api/analyze")).json());$("#err").textContent=""}
   catch(e){$("#err").textContent=e.message==="Failed to fetch"?"Cannot reach the analysis server.":e.message}
   $("#go").disabled=false;$("#go").textContent="Analyze";
 }
@@ -148,13 +154,13 @@ function render(d){
   $("#chips").innerHTML=`<span class="chip">Script: <b>${d.script}</b></span><span class="chip">Adapter: <b>${d.adapter}</b></span>
    <span class="chip">Notation density: <b>${(d.ndi*100).toFixed(1)}%</b></span>
    ${d.low_evidence?'<span class="chip"><b>Low evidence</b></span>':""}
-   <span class="chip">Likely source: <b>${esc(likely)}</b></span>`;
+   <span class="chip">Likely source: <b>${esc(nice(likely))}</b></span>`;
   $("#warns").innerHTML=(d.warnings||[]).map(w=>`<div class="banner">${esc(w)}</div>`).join("");
   const C=2*Math.PI*46,a=d.ai_pct/100*C;
   $("#donut").innerHTML=`<circle cx="60" cy="60" r="46" fill="none" stroke="var(--hu)" stroke-width="16"/>
    <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ai)" stroke-width="16" stroke-dasharray="${a} ${C}" transform="rotate(-90 60 60)"/>`;
   $("#aiPct").textContent=`${d.ai_pct.toFixed(1)}% AI · ${d.human_pct.toFixed(1)}% Human`;
-  $("#gens").innerHTML=[human,...ranked].filter(Boolean).map(([n,p],i)=>`<div class="gen ${i===1&&d.ai_pct>=50?"top":""}"><span>${esc(n)}</span><div class="track"><div class="fill" style="width:${p*100}%"></div></div><span>${(p*100).toFixed(1)}%</span></div>`).join("");
+  $("#gens").innerHTML=[human,...ranked].filter(Boolean).map(([n,p],i)=>`<div class="gen ${i===1&&d.ai_pct>=50?"top":""}"><span>${esc(nice(n))}</span><div class="track"><div class="fill" style="width:${p*100}%"></div></div><span>${(p*100).toFixed(1)}%</span></div>`).join("");
   const segs=d.segments,n=segs.length,W=Math.max(600,n*14),bw=W/n;
   let bars="",flag=0,tc=0;
   segs.forEach((s,i)=>{
