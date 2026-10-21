@@ -72,7 +72,31 @@ def build_windows(sentence_idx: List[int], segs: List[Dict], window_tokens: int)
     return windows
 
 
-def analyze(text: str, scorer, window_tokens: int = 100, temperature: float = 1.0) -> Dict:
+def apply_calibration(p: np.ndarray, ab) -> np.ndarray:
+    """Platt-scale P(AI) = 1 - P(human) with (a, b) fitted on validation windows, then
+    rescale the generator classes proportionally so each row still sums to 1."""
+    a, b = ab
+    ai = np.clip(1.0 - p[:, 0], 1e-6, 1 - 1e-6)
+    new_ai = 1.0 / (1.0 + np.exp(-(a * np.log(ai / (1 - ai)) + b)))
+    out = p.copy()
+    out[:, 0] = 1.0 - new_ai
+    rest = p[:, 1:].sum(axis=1, keepdims=True)
+    out[:, 1:] = p[:, 1:] / np.clip(rest, 1e-9, None) * new_ai[:, None]
+    return out
+
+
+def load_calibration(path=None):
+    import json, os
+    path = path or os.path.join(os.path.dirname(__file__), "..", "configs", "calibration.json")
+    if os.path.exists(path):
+        return json.load(open(path, encoding="utf-8"))
+    return {}
+
+
+def analyze(text: str, scorer, window_tokens: int = None, temperature: float = 1.0, calibration: dict = None) -> Dict:
+    cal = load_calibration() if calibration is None else calibration
+    if window_tokens is None:
+        window_tokens = cal.get("_window_tokens", 100)
     text = text.replace("\r\n", "\n")
     segs = segment(text)
     text_idx = [i for i, s in enumerate(segs) if s["type"] == "text" and s["text"].strip()]
@@ -116,7 +140,10 @@ def analyze(text: str, scorer, window_tokens: int = 100, temperature: float = 1.
         if temperature != 1.0:
             p = np.power(np.clip(p, 1e-9, 1), 1.0 / temperature)
             p /= p.sum(axis=1, keepdims=True)
+        if cl in cal:
+            p = apply_calibration(p, (cal[cl]["a"], cal[cl]["b"]))
         probs[idx] = p
+    result["calibrated"] = any(c in cal for c in set(clusters))
     result["n_windows"] = len(windows)
     if len(set(clusters)) > 1:
         result["mixed_script"] = True

@@ -18,13 +18,20 @@ Prepared locally in `C:\Users\sange\multilingual-aa-sfaca` (commits are local on
 | `scripts/export_adapters.py` (new) | Picks the best run per cluster by validation F1. |
 | `tests/test_api.py` (new), `tests/test_inference.py` | 47 tests pass on CPU. |
 
+## Training and evaluation (done locally on the RTX 4050)
+
+Data came from Kaggle `sandeep01321/sfaca-data` (hashes match `docs/DATA_CARD.md`). All five clusters were trained with
+`scripts/train_all_local.sh` (seed 42, 3 epochs, length 128). Results are in `results/pipeline_eval.md`.
+`scripts/calibrate.py` fits a per-script calibration on validation windows (`configs/calibration.json`, tracked); this fixed
+human text being over-flagged as AI (Cyrillic human text was 93% AI before, 33% after). Re-run it whenever adapters change.
+
+Not tracked by git (gitignored, must be uploaded separately): `results/adapters/*` (*.bin, *.pt) and `data/`.
+
 ## Not done, and why
 
-1. **No trained adapters, so the real model has not been run.** The adapters and `multitude_v3_clean.csv` are in your private Kaggle dataset (`sandeep01321/dataset`); they are not in the repo.
-   The README matrix numbers are unverified (see `AGENT_BRIEF.md` F12/F13/F15).
-2. **Retraining on the local RTX 4050 (6 GB)** is blocked on the CSV and on `data/processed/splits_8class.csv`.
-3. **GitHub Pages only hosts static files.** Set `window.SFACA_API_URL` in `docs/config.js` to wherever `backend/api.py` runs (a Hugging Face Space, a VM, or a tunnel). Without that, the page loads but cannot analyze.
-4. **Not built:** highlighted `.docx`/`.pdf` export (HTML only), evidence tab, Dockerfile, CI.
+1. **One seed only.** Your own notes show same-config runs varying by many points; treat these as a single sample. Seeds 43/44 and the monolithic baseline from `EXPERIMENTS.md` were not run.
+2. **GitHub Pages only hosts static files.** Point `window.SFACA_API_URL` (or the Lovable `API_URL`, see `docs/LOVABLE_PROMPT.md`) at wherever `backend/api.py` runs. The adapters (about 15 MB each) must be uploaded to that host or to the Hugging Face Hub.
+3. **Not built:** highlighted `.docx`/`.pdf` export (HTML only), evidence tab, Dockerfile, CI.
 
 ## Run locally
 
