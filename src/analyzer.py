@@ -10,6 +10,7 @@ A scorer must provide:
     predict_probs(texts, cluster) -> array of shape (len(texts), len(labels))
 """
 
+import os
 import re
 from typing import Dict, List, Optional
 
@@ -23,7 +24,7 @@ CJK_RE = re.compile(r"[぀-ヿ一-鿿가-힯]")
 
 MIN_SENTENCE_LETTERS = 20      # below this a sentence is too short to carry signal
 MIN_DOC_CHARS = 200            # below this the whole document is low evidence
-MAX_WINDOWS = 400              # hard cap per request
+MAX_WINDOWS = int(os.environ.get("SFACA_MAX_WINDOWS", 400))   # hard cap per request (lower on CPU hosts)
 NDI_WARN = 0.15
 
 

@@ -103,11 +103,20 @@ document.addEventListener("DOMContentLoaded",()=>{$("#theme").onclick=()=>{
 const SAMPLE="Photosynthesis is the process by which plants convert light into chemical energy. I remember my grandmother watering her tomatoes every dawn, grumbling about the heat. Moreover, it is crucial to understand that this process plays a pivotal role in sustaining life on Earth. The overall reaction can be written as $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$ for the net process. Furthermore, researchers continue to delve into the multifaceted mechanisms that underpin it. Honestly, the lab results we got last week were a mess.";
 let mode="text",file=null;
 
-fetch(API+"/health").then(r=>r.json()).then(h=>{
+// Free hosts sleep when idle and take 1-2 minutes to wake, so retry the health check before giving up.
+async function checkHealth(tries){
   const b=$("#banner");
-  if(h.model==="stub"){b.textContent="Demo mode: scores come from a placeholder heuristic, not the trained model.";b.classList.remove("hidden")}
-  else if(h.status!=="ok"){b.textContent="The model is not loaded on the server yet.";b.classList.remove("hidden")}
-}).catch(()=>{const b=$("#banner");b.textContent="Cannot reach the analysis server"+(API?" at "+API:"")+". Start it with: python backend/api.py";b.classList.remove("hidden")});
+  try{
+    const h=await(await fetch(API+"/health")).json();
+    if(h.model==="stub"){b.textContent="Demo mode: scores come from a placeholder heuristic, not the trained model.";b.classList.remove("hidden")}
+    else if(h.status!=="ok"){b.textContent="The model is still loading on the server…";b.classList.remove("hidden");if(tries>0)setTimeout(()=>checkHealth(tries-1),5000)}
+    else b.classList.add("hidden");
+  }catch(e){
+    if(tries>0){b.textContent="Waking up the analysis server, this can take up to two minutes…";b.classList.remove("hidden");setTimeout(()=>checkHealth(tries-1),5000)}
+    else{b.textContent="Cannot reach the analysis server"+(API?" at "+API:"")+". Please try again later.";b.classList.remove("hidden")}
+  }
+}
+checkHealth(24);
 
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{mode=b.dataset.m;
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
