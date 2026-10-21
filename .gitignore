@@ -17,3 +17,4 @@ read_docx.py
 Project_Report_Script_Family_Adapters.txt
 .venv/
 data/processed/
+.claude/

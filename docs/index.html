@@ -1,194 +1,192 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SFA-CA | Multilingual AI Text Attribution System</title>
-  <meta name="description" content="Script-Family-Aware Contrastive Adaptation for Multi-LLM Detection & Authorship Attribution across 5 language scripts." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SFA-CA AI Text Attribution</title>
+<meta name="description" content="Upload or paste text to see how likely it is AI-written, which passages, and which generator.">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--bd:#e2e5ea;--tx:#161a22;--mut:#667085;--ai:#e5484d;--hu:#26a269;--ac:#6554e0;--no:#98a2b3;--warn:#b54708;--warnbg:#fffaeb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1d;--card:#262628;--bd:#37373b;--tx:#ececf0;--mut:#9a9aa5;--ai:#ff6369;--hu:#3dd68c;--ac:#9a8cff;--no:#6b6b75;--warn:#fec84b;--warnbg:#3a2d12}}
+:root[data-theme="dark"]{--bg:#1b1b1d;--card:#262628;--bd:#37373b;--tx:#ececf0;--mut:#9a9aa5;--ai:#ff6369;--hu:#3dd68c;--ac:#9a8cff;--no:#6b6b75;--warn:#fec84b;--warnbg:#3a2d12}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--mut);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:16px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{border:1px solid var(--bd);background:transparent;color:var(--mut);padding:6px 14px;border-radius:999px;cursor:pointer;font:inherit}
+.tab.on{background:var(--ac);border-color:var(--ac);color:#fff}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+textarea{width:100%;min-height:160px;resize:vertical;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:12px;font:inherit}
+.drop{border:2px dashed var(--bd);border-radius:12px;padding:34px 12px;text-align:center;color:var(--mut);cursor:pointer}
+.drop.over,.drop:hover{border-color:var(--ac);color:var(--tx)}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 22px;font:inherit;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;border:1px solid var(--bd);color:var(--tx)}
+.hint{color:var(--mut);font-size:13px}
+.banner{border:1px solid var(--warn);background:var(--warnbg);color:var(--warn);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:13px}
+.grid{display:grid;grid-template-columns:260px 1fr;gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.donutbox{text-align:center}
+.big{font-weight:700;font-size:17px}
+.legend{display:flex;gap:14px;justify-content:center;font-size:13px;margin-top:6px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+h3{margin:0 0 10px;font-size:15px}
+.gen{display:grid;grid-template-columns:150px 1fr 48px;gap:8px;align-items:center;font-size:13px;margin:5px 0}
+.track{height:9px;background:var(--bg);border-radius:6px;overflow:hidden}
+.fill{height:100%;background:var(--ac);border-radius:6px}
+.top .fill{background:var(--ai)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{font-size:12px;border:1px solid var(--bd);border-radius:999px;padding:3px 10px;color:var(--mut)}
+.chip b{color:var(--tx)}
+.doc{white-space:pre-wrap;word-wrap:break-word;line-height:1.8}
+.seg{border-radius:4px;padding:1px 0;cursor:help}
+.seg.flash{outline:2px solid var(--ac)}
+.not{border-bottom:1px dashed var(--no);color:var(--mut);font-family:ui-monospace,Menlo,monospace;font-size:.92em;background:color-mix(in srgb,var(--no) 25%,transparent)}
+.plot{overflow-x:auto}
+svg text{fill:var(--mut);font-size:10px}
+.err{color:var(--ai);min-height:1.4em}
+.hidden{display:none}
+.note{color:var(--mut);font-size:12.5px;margin-top:6px}
+</style></head>
+<body><div class="wrap">
+<header><span style="font-size:24px" aria-hidden="true">🔎</span><h1 style="flex:1">AI Text Attribution</h1><button class="btn ghost" id="theme" style="padding:6px 12px" aria-label="Toggle light/dark theme">◐</button></header>
+<p class="sub">Paste text or upload a file. See the AI / human split, which passages look machine-written, and the most likely generator.</p>
+<div id="banner" class="banner hidden" role="status"></div>
 
-  <!-- ── HEADER ─────────────────────────────────────────────────────────── -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="13" stroke="url(#lg1)" stroke-width="2"/>
-            <path d="M8 14 L14 8 L20 14 L14 20 Z" fill="url(#lg2)"/>
-            <circle cx="14" cy="14" r="3" fill="white"/>
-            <defs>
-              <linearGradient id="lg1" x1="0" y1="0" x2="28" y2="28">
-                <stop offset="0%" stop-color="#7c3aed"/>
-                <stop offset="100%" stop-color="#2563eb"/>
-              </linearGradient>
-              <linearGradient id="lg2" x1="0" y1="0" x2="28" y2="28">
-                <stop offset="0%" stop-color="#a78bfa"/>
-                <stop offset="100%" stop-color="#60a5fa"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div>
-          <span class="logo-title">SFA-CA</span>
-          <span class="logo-sub">AI Attribution System</span>
-        </div>
-      </div>
-      <nav class="nav-badges">
-        <span class="badge badge-purple">XLM-RoBERTa-large</span>
-        <span class="badge badge-blue">LoRA Adapters</span>
-        <span class="badge badge-green" id="status-badge">● Connecting...</span>
-      </nav>
+<div class="card">
+  <div class="tabs" role="tablist"><button class="tab on" data-m="text" role="tab">Paste text</button><button class="tab" data-m="file" role="tab">Upload file</button></div>
+  <div id="pText"><textarea id="txt" aria-label="Text to analyze" placeholder="Paste text in any supported language (Latin, Cyrillic, Greek, Arabic, Chinese scripts). LaTeX and code are detected and excluded from scoring."></textarea></div>
+  <div id="pFile" class="hidden">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a file">Drop a .pdf, .docx, .txt or .md here, or click to browse<br><span id="fname" class="hint"></span></div>
+    <input type="file" id="fin" accept=".pdf,.docx,.txt,.md" hidden>
+  </div>
+  <div class="row"><span class="hint">Max 8 MB. Scanned PDFs are not supported (no OCR).</span>
+    <span><button class="btn ghost" id="sample">Load sample</button> <button class="btn" id="go">Analyze</button></span></div>
+  <div id="err" class="err hint" role="alert"></div>
+</div>
+
+<div id="res" class="hidden">
+  <div class="chips" id="chips"></div>
+  <div id="warns"></div>
+  <div class="grid">
+    <div class="card donutbox">
+      <svg id="donut" viewBox="0 0 120 120" width="190" height="190" role="img" aria-label="AI versus human share"></svg>
+      <div class="big" id="aiPct"></div>
+      <div class="legend"><span><i class="dot" style="background:var(--ai)"></i>AI</span><span><i class="dot" style="background:var(--hu)"></i>Human</span></div>
     </div>
-  </header>
+    <div class="card"><h3>Which AI wrote it?</h3><div id="gens"></div>
+      <div class="note">Generators the model was trained on: GPT-3.5, Llama-2, Mistral-7B, Vicuna, OPT-IML, Eagle-7B, Aya-101. Text from any other model (GPT-4o, Claude, Gemini...) is mapped to the closest one.</div></div>
+  </div>
+  <div class="card"><h3>AI probability across the document</h3><div class="plot" id="plot"></div>
+    <div class="hint">Each bar is one sentence. Click a bar to jump to it. Grey bars are math/code, excluded from scoring.</div></div>
+  <div class="card"><h3>Where the AI text is</h3>
+    <div class="chips"><span class="chip"><i class="dot" style="background:var(--ai)"></i>darker = more likely AI</span><span class="chip"><span class="not">$x^2$</span> math/code excluded</span><span class="chip" id="flagged"></span></div>
+    <div class="doc" id="doc"></div>
+    <div class="row"><span class="note">This is a statistical likelihood, not proof of authorship. Short, edited or paraphrased text is unreliable.</span>
+      <button class="btn ghost" id="dl">Download highlighted report</button></div></div>
+</div>
+</div>
+<script src="config.js"></script>
+<script>
+const API=(window.SFACA_API_URL||"").replace(/\/$/,"");
+const $=s=>document.querySelector(s);
+const esc=t=>t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const NAMES={"human":"Human","Llama-2-70b-chat-hf":"Llama-2 70B","Mistral-7B-Instruct-v0.2":"Mistral 7B","aya-101":"Aya-101","gpt-3.5-turbo-0125":"GPT-3.5 Turbo","opt-iml-max-30b":"OPT-IML 30B","v5-Eagle-7B-HF":"Eagle 7B","vicuna-13b":"Vicuna 13B"};
+const nice=n=>NAMES[n]||n;
+try{const th=localStorage.getItem("theme");if(th)document.documentElement.dataset.theme=th}catch(e){}
+document.addEventListener("DOMContentLoaded",()=>{$("#theme").onclick=()=>{
+  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  const next=dark?"light":"dark";document.documentElement.dataset.theme=next;try{localStorage.setItem("theme",next)}catch(e){}}});
+const SAMPLE="Photosynthesis is the process by which plants convert light into chemical energy. I remember my grandmother watering her tomatoes every dawn, grumbling about the heat. Moreover, it is crucial to understand that this process plays a pivotal role in sustaining life on Earth. The overall reaction can be written as $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$ for the net process. Furthermore, researchers continue to delve into the multifaceted mechanisms that underpin it. Honestly, the lab results we got last week were a mess.";
+let mode="text",file=null;
 
-  <!-- ── HERO ───────────────────────────────────────────────────────────── -->
-  <section class="hero">
-    <div class="hero-glow"></div>
-    <h1 class="hero-title">
-      Multilingual AI Text<br/>
-      <span class="gradient-text">Attribution & Detection</span>
-    </h1>
-    <p class="hero-sub">
-      Script-Family-Aware Contrastive Adaptation · 5 Language Scripts · 10 LLM Classes
-    </p>
-    <div class="hero-clusters">
-      <span class="cluster-pill">🔤 Latin</span>
-      <span class="cluster-pill">Я Cyrillic</span>
-      <span class="cluster-pill">Ω Greek</span>
-      <span class="cluster-pill">ع Arabic</span>
-      <span class="cluster-pill">漢 Hanzi</span>
-    </div>
-  </section>
+// Free hosts sleep when idle and take 1-2 minutes to wake, so retry the health check before giving up.
+async function checkHealth(tries){
+  const b=$("#banner");
+  try{
+    const h=await(await fetch(API+"/health")).json();
+    if(h.model==="stub"){b.textContent="Demo mode: scores come from a placeholder heuristic, not the trained model.";b.classList.remove("hidden")}
+    else if(h.status!=="ok"){b.textContent="The model is still loading on the server…";b.classList.remove("hidden");if(tries>0)setTimeout(()=>checkHealth(tries-1),5000)}
+    else b.classList.add("hidden");
+  }catch(e){
+    if(tries>0){b.textContent="Waking up the analysis server, this can take up to two minutes…";b.classList.remove("hidden");setTimeout(()=>checkHealth(tries-1),5000)}
+    else{b.textContent="Cannot reach the analysis server"+(API?" at "+API:"")+". Please try again later.";b.classList.remove("hidden")}
+  }
+}
+checkHealth(24);
 
-  <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
-  <main class="main-grid">
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{mode=b.dataset.m;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  $("#pText").classList.toggle("hidden",mode!=="text");$("#pFile").classList.toggle("hidden",mode!=="file")});
+$("#drop").onclick=()=>$("#fin").click();
+$("#drop").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#fin").click()}};
+$("#fin").onchange=e=>setFile(e.target.files[0]);
+["dragover","dragleave","drop"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();
+  $("#drop").classList.toggle("over",ev==="dragover");if(ev==="drop")setFile(e.dataTransfer.files[0])}));
+function setFile(f){if(f){file=f;$("#fname").textContent=f.name}}
+$("#sample").onclick=()=>{document.querySelector('.tab[data-m="text"]').click();$("#txt").value=SAMPLE};
 
-    <!-- LEFT: Input Panel -->
-    <section class="card input-card">
-      <div class="card-header">
-        <span class="card-icon">✍️</span>
-        <h2 class="card-title">Input Text</h2>
-        <span class="char-count" id="char-count">0 chars</span>
-      </div>
+function formData(){
+  const fd=new FormData();
+  if(mode==="file"){if(!file)throw new Error("Choose a file first.");fd.append("file",file)}
+  else{if($("#txt").value.trim().length<40)throw new Error("Please provide at least a couple of sentences.");fd.append("text",$("#txt").value)}
+  return fd;
+}
+async function call(path){
+  const r=await fetch(API+path,{method:"POST",body:formData()});
+  if(!r.ok){let m="Server error "+r.status;try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
+  return r;
+}
+async function analyze(){
+  $("#err").textContent="Analyzing… the first request can take a few seconds while the model warms up.";$("#go").disabled=true;$("#go").textContent="Analyzing…";
+  try{render(await(await call("/api/analyze")).json());$("#err").textContent=""}
+  catch(e){$("#err").textContent=e.message==="Failed to fetch"?"Cannot reach the analysis server.":e.message}
+  $("#go").disabled=false;$("#go").textContent="Analyze";
+}
+$("#go").onclick=analyze;
+$("#dl").onclick=async()=>{
+  $("#err").textContent="";
+  try{const b=await(await call("/api/export")).blob();const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);a.download="sfaca-report.html";a.click();URL.revokeObjectURL(a.href)}
+  catch(e){$("#err").textContent=e.message}
+};
 
-      <textarea
-        id="text-input"
-        class="text-area"
-        placeholder="Paste any text in English, Russian, Arabic, Greek, Chinese...&#10;&#10;The system will automatically detect the script and engage the matching LoRA adapter."
-        spellcheck="false"
-      ></textarea>
-
-      <!-- File Upload -->
-      <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon">📎</div>
-        <div class="upload-label">Drop file here or <span class="upload-link">browse</span></div>
-        <div class="upload-hint">Supports .txt · .pdf · .docx · .md</div>
-        <input type="file" id="file-input" accept=".txt,.pdf,.docx,.md" hidden />
-      </div>
-
-      <div class="input-actions">
-        <button class="btn-clear" id="btn-clear">Clear</button>
-        <button class="btn-analyze" id="btn-analyze">
-          <span class="btn-text">Analyze Attribution</span>
-          <span class="btn-arrow">→</span>
-        </button>
-      </div>
-
-      <!-- Example texts -->
-      <div class="examples">
-        <span class="examples-label">Try an example:</span>
-        <button class="example-btn" data-text="Large language models have revolutionized natural language processing by enabling zero-shot generalization across diverse linguistic tasks. The transformer architecture's attention mechanism allows models to capture long-range dependencies in text, enabling sophisticated language understanding capabilities.">GPT-style</button>
-        <button class="example-btn" data-text="I'd be happy to help analyze this topic. When considering complex technical frameworks, it is essential to systematically examine each component and evaluate its contribution to the overall system. Let me walk you through this clearly and methodically.">Claude-style</button>
-        <button class="example-btn" data-text="Yesterday I went to the market and bought some vegetables. The weather was nice and I met my neighbor there. We talked for a while about the neighborhood and then I walked back home.">Human-style</button>
-      </div>
-    </section>
-
-    <!-- RIGHT: Results Panel -->
-    <section class="card results-card" id="results-card">
-
-      <!-- Idle state -->
-      <div class="idle-state" id="idle-state">
-        <div class="idle-icon">🔍</div>
-        <h3 class="idle-title">Analysis Output Will Appear Here</h3>
-        <p class="idle-sub">Enter text and click <strong>Analyze Attribution</strong> to begin</p>
-      </div>
-
-      <!-- Loading state -->
-      <div class="loading-state hidden" id="loading-state">
-        <div class="spinner"></div>
-        <p class="loading-text">Analyzing text attribution...</p>
-        <p class="loading-sub">Routing to script adapter · Running inference</p>
-      </div>
-
-      <!-- Results state -->
-      <div class="results-state hidden" id="results-state">
-
-        <!-- Verdict Banner -->
-        <div class="verdict-banner" id="verdict-banner">
-          <div class="verdict-left">
-            <div class="verdict-icon" id="verdict-icon">🤖</div>
-            <div>
-              <div class="verdict-label" id="verdict-label">AI-Generated</div>
-              <div class="verdict-detail" id="verdict-detail">Primary: GPT-3.5-Turbo</div>
-            </div>
-          </div>
-          <div class="confidence-ring-wrap">
-            <svg class="confidence-ring" viewBox="0 0 80 80" width="80" height="80">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="#1e1b4b" stroke-width="8"/>
-              <circle cx="40" cy="40" r="34" fill="none" stroke="url(#ringGrad)"
-                stroke-width="8" stroke-linecap="round"
-                stroke-dasharray="213.6" stroke-dashoffset="213.6"
-                id="confidence-arc" transform="rotate(-90 40 40)"/>
-              <text x="40" y="36" text-anchor="middle" font-size="14" font-weight="700" fill="white" id="conf-pct">87%</text>
-              <text x="40" y="50" text-anchor="middle" font-size="7" fill="#a78bfa">confidence</text>
-              <defs>
-                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#7c3aed"/>
-                  <stop offset="100%" stop-color="#2563eb"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Cluster Badge -->
-        <div class="cluster-badge-row">
-          <span class="meta-label">Active Adapter:</span>
-          <span class="cluster-badge" id="cluster-badge">Latin</span>
-          <span class="meta-label" style="margin-left:12px;">AI Probability:</span>
-          <span class="ai-prob-pill" id="ai-prob-pill">87%</span>
-        </div>
-
-        <!-- Bar Chart -->
-        <div class="chart-section">
-          <div class="chart-title">Attribution Probability Distribution</div>
-          <div class="bar-chart" id="bar-chart"></div>
-        </div>
-
-        <!-- Radar Chart -->
-        <div class="chart-section">
-          <div class="chart-title">Provenance Radar Profile</div>
-          <canvas id="radar-canvas" width="280" height="280"></canvas>
-        </div>
-
-      </div>
-    </section>
-  </main>
-
-  <!-- ── FOOTER ─────────────────────────────────────────────────────────── -->
-  <footer class="footer">
-    <p>
-      Developed for BTech/BE Final Research Project ·
-      <strong>Script-Family-Aware Contrastive Adaptation (SFA-CA)</strong> ·
-      <a href="https://github.com/ByteBeast-1/multilingual-aa-sfaca" target="_blank" rel="noopener">GitHub ↗</a>
-    </p>
-  </footer>
-
-  <script src="app.js?v=2"></script>
-</body>
-</html>
+function render(d){
+  $("#res").classList.remove("hidden");
+  const gp=Object.entries(d.generator_probs);
+  const ranked=gp.filter(p=>p[0]!=="human").sort((a,b)=>b[1]-a[1]);
+  const human=gp.find(p=>p[0]==="human");
+  const likely=d.ai_pct>=50&&d.top_generator?d.top_generator:"Human";
+  $("#chips").innerHTML=`<span class="chip">Script: <b>${d.script}</b></span><span class="chip">Adapter: <b>${d.adapter}</b></span>
+   <span class="chip">Notation density: <b>${(d.ndi*100).toFixed(1)}%</b></span>
+   ${d.low_evidence?'<span class="chip"><b>Low evidence</b></span>':""}
+   <span class="chip">Likely source: <b>${esc(nice(likely))}</b></span>`;
+  $("#warns").innerHTML=(d.warnings||[]).map(w=>`<div class="banner">${esc(w)}</div>`).join("");
+  const C=2*Math.PI*46,a=d.ai_pct/100*C;
+  $("#donut").innerHTML=`<circle cx="60" cy="60" r="46" fill="none" stroke="var(--hu)" stroke-width="16"/>
+   <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ai)" stroke-width="16" stroke-dasharray="${a} ${C}" transform="rotate(-90 60 60)"/>`;
+  $("#aiPct").textContent=`${d.ai_pct.toFixed(1)}% AI · ${d.human_pct.toFixed(1)}% Human`;
+  $("#gens").innerHTML=[human,...ranked].filter(Boolean).map(([n,p],i)=>`<div class="gen ${i===1&&d.ai_pct>=50?"top":""}"><span>${esc(nice(n))}</span><div class="track"><div class="fill" style="width:${p*100}%"></div></div><span>${(p*100).toFixed(1)}%</span></div>`).join("");
+  const segs=d.segments,n=segs.length,W=Math.max(600,n*14),bw=W/n;
+  let bars="",flag=0,tc=0;
+  segs.forEach((s,i)=>{
+    if(s.type==="notation"){bars+=`<rect x="${i*bw+1}" y="92" width="${bw-2}" height="8" fill="var(--no)"/>`;return}
+    if(!s.scored)return;
+    tc++;if(s.ai_prob>=.5)flag++;
+    const h=Math.max(2,s.ai_prob*90);
+    bars+=`<rect data-i="${i}" x="${i*bw+1}" y="${100-h}" width="${bw-2}" height="${h}" rx="2" fill="${s.ai_prob>=.5?"var(--ai)":"var(--hu)"}" style="cursor:pointer"><title>${(s.ai_prob*100).toFixed(0)}% AI</title></rect>`});
+  $("#plot").innerHTML=`<svg viewBox="0 0 ${W} 112" width="${W}" height="150" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="55" y2="55" stroke="var(--bd)" stroke-dasharray="4"/><text x="2" y="52">50%</text>${bars}</svg>`;
+  $("#plot").querySelectorAll("rect[data-i]").forEach(r=>r.onclick=()=>{
+    const el=document.getElementById("s"+r.dataset.i);el.scrollIntoView({behavior:"smooth",block:"center"});
+    el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1500)});
+  $("#flagged").textContent=`${flag} of ${tc} sentences flagged (≥50% AI)`;
+  $("#doc").innerHTML=segs.map((s,i)=>s.type==="notation"
+    ?`<span class="seg not" id="s${i}" title="Math/code: excluded from scoring">${esc(s.text)}</span>`
+    :s.scored?`<span class="seg" id="s${i}" title="${(s.ai_prob*100).toFixed(0)}% AI" style="background:color-mix(in srgb,var(--ai) ${Math.round(Math.max(0,s.ai_prob-.35)/.65*70)}%,transparent)">${esc(s.text)}</span>`
+    :`<span class="seg" id="s${i}" title="Too short to score">${esc(s.text)}</span>`).join("");
+  $("#res").scrollIntoView({behavior:"smooth"});
+}
+</script></body></html>
