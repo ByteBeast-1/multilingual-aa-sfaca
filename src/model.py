@@ -23,7 +23,7 @@ from clusters import all_clusters
 
 
 BACKBONE_NAME = "xlm-roberta-large"  # same backbone as base paper's OTBDetector
-NUM_CLASSES = 10                      # default / fallback (train.py overrides with 8)
+NUM_CLASSES = 8                       # human + 7 generators (8-class task)
 LORA_TARGET_MODULES = ["query", "value"]  # XLM-RoBERTa attention projections
 
 

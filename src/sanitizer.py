@@ -133,3 +133,21 @@ if __name__ == "__main__":
     print("Original Text:", test_text)
     print("Sanitized Text:", clean_txt)
     print("Metadata:", metadata)
+
+
+_MATH_RE = re.compile("|".join(LATEX_MATH_PATTERNS))
+_CODE_RE = re.compile("|".join(CODE_BLOCK_PATTERNS))
+
+
+def find_notation_spans(text: str) -> List[Tuple[int, int, str]]:
+    """Return non-overlapping (start, end, type) spans of math/code in `text`.
+
+    Offsets refer to the original string so the UI can highlight in place.
+    Code spans win over math spans when they overlap (a `$` inside a code block
+    is not LaTeX).
+    """
+    spans = [(m.start(), m.end(), "code") for m in _CODE_RE.finditer(text)]
+    for m in _MATH_RE.finditer(text):
+        if not any(m.start() < e and m.end() > s for s, e, _ in spans):
+            spans.append((m.start(), m.end(), "math"))
+    return sorted(spans)

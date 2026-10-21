@@ -1,151 +1,139 @@
 """
 api.py
 ------
-FastAPI backend for SFA-CA Multilingual AI Attribution System.
-Deploy to Hugging Face Spaces (FastAPI SDK).
+FastAPI backend for SFA-CA.  Endpoints:
+  GET  /health        model state
+  POST /api/analyze   multipart: `text` or `file` (.txt .md .docx .pdf) -> analysis JSON
+  POST /api/export    same input -> highlighted HTML report
+The static frontend in docs/ is served at / when present.
+
+Env: ADAPTER_DIR (trained adapters), SFACA_STUB=1 (heuristic demo scorer),
+     ALLOWED_ORIGINS (comma-separated CORS origins, default *).
 """
-
-from __future__ import annotations
-
 import os
 import sys
-import re
-from typing import Optional
+import tempfile
+import threading
 from contextlib import asynccontextmanager
+from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import torch
-import torch.nn.functional as F
-import uvicorn
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(ROOT, "src"))
+
+from analyzer import analyze  # noqa: E402
+from exporters import to_html  # noqa: E402
+from file_parser import parse_uploaded_file  # noqa: E402
+
+MAX_BYTES = 8 * 1024 * 1024
+MAX_CHARS = 150_000
+ALLOWED_EXT = {".txt", ".md", ".docx", ".pdf"}
+
+_SCORER = None
+_MODEL_NAME = None
+_LOCK = threading.Lock()   # one forward pass at a time
 
 
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-from inference import InferenceEngine, detect_script_cluster
-from clusters import all_clusters
-from data_loader import ID2LABEL
-
-# ── Global model cache ────────────────────────────────────────────────────────
-_ENGINE = None
-
-def _load_model():
-    global _ENGINE
-    if _ENGINE is not None:
+def load_scorer():
+    global _SCORER, _MODEL_NAME
+    if _SCORER is not None:
         return
+    if os.environ.get("SFACA_STUB") == "1":
+        from stub_scorer import StubScorer
+        _SCORER, _MODEL_NAME = StubScorer(), "stub"
+        return
+    from inference import InferenceEngine
+    engine = InferenceEngine()
+    engine.load_from_dir()
+    _SCORER, _MODEL_NAME = engine, "sfa-ca"
 
-    print("[SFA-CA] Loading Inference Engine...")
-    _ENGINE = InferenceEngine()
-    _ENGINE.load_from_dir()
-    print("[SFA-CA] Model ready.")
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    _load_model()
+async def lifespan(app):
+    try:
+        load_scorer()
+    except Exception as e:  # keep the server up so /health explains the problem
+        print(f"[SFA-CA] model not loaded: {e}")
     yield
 
 
-# ── FastAPI app ───────────────────────────────────────────────────────────────
-app = FastAPI(
-    title="SFA-CA Multilingual AI Attribution API",
-    description="Script-Family-Aware Contrastive Adaptation for Multi-LLM Detection",
-    version="1.0.0",
-    lifespan=lifespan,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],          # Allow GitHub Pages and all origins
-    allow_credentials=False,      # Must be False when allow_origins is ["*"] for browser CORS compliance
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# ── Request / Response models ─────────────────────────────────────────────────
-class AnalyzeRequest(BaseModel):
-    text: str
-    max_length: int = 256
-
-
-class AnalyzeResponse(BaseModel):
-    verdict: str                          # "AI-Generated" or "Human-Written"
-    confidence: float                     # 0–1
-    ai_probability: float
-    human_probability: float
-    top_generator: str
-    top_generator_confidence: float
-    script_cluster: str
-    probabilities: dict[str, float]       # {label: probability}
-    sanitized_text_preview: str
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-_MATH_PATTERN = re.compile(
-    r"(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\begin\{[^}]+\}[\s\S]+?\\end\{[^}]+\})"
-)
-
-
-
-def _sanitize(text: str) -> tuple[str, bool]:
-    cleaned, n = _MATH_PATTERN.subn(" [MATH] ", text)
-    return cleaned.strip(), n > 0
-
-
-# ── Endpoints ─────────────────────────────────────────────────────────────────
-@app.get("/")
-def root():
-    return {
-        "status": "online",
-        "model": "SFA-CA v1.0",
-        "classes": list(ID2LABEL.values()),
-        "clusters": all_clusters(),
-    }
+app = FastAPI(title="SFA-CA AI-text attribution", version="2.0.0", lifespan=lifespan)
+_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_credentials=False,
+                   allow_methods=["GET", "POST"], allow_headers=["*"])
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_loaded": _ENGINE is not None}
+    return {"status": "ok" if _SCORER is not None else "no_model", "model": _MODEL_NAME,
+            "labels": list(_SCORER.labels) if _SCORER else []}
 
 
-@app.post("/analyze", response_model=AnalyzeResponse)
-def analyze(req: AnalyzeRequest):
-    if _ENGINE is None:
-        raise HTTPException(status_code=503, detail="Model not loaded yet.")
+async def _read_input(text: Optional[str], file: Optional[UploadFile]):
+    name = "pasted-text"
+    if file is not None and file.filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_EXT:
+            raise HTTPException(415, f"Unsupported file type '{ext}'. Use .txt, .md, .docx or .pdf.")
+        data = await file.read(MAX_BYTES + 1)
+        if len(data) > MAX_BYTES:
+            raise HTTPException(413, "File too large (max 8 MB).")
+        name = file.filename
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "upload" + ext)
+            with open(path, "wb") as f:
+                f.write(data)
+            try:
+                text, _ = parse_uploaded_file(path)
+            except Exception:
+                raise HTTPException(422, "Could not read this file. It may be corrupt or password-protected.")
+        if not text.strip():
+            raise HTTPException(422, "No extractable text. Scanned/image-only PDFs are not supported (no OCR).")
+    if not text or len(text.strip()) < 40:
+        raise HTTPException(400, "Provide at least a couple of sentences (40+ characters).")
+    if len(text) > MAX_CHARS:
+        raise HTTPException(413, f"Text too long (max {MAX_CHARS:,} characters).")
+    return text, name
 
-    if not req.text or len(req.text.strip()) < 10:
-        raise HTTPException(status_code=400, detail="Text too short (min 10 chars).")
 
-    sanitized, had_math = _sanitize(req.text)
-    cluster = detect_script_cluster(sanitized)
-
+def _run(text: str) -> dict:
+    if _SCORER is None:
+        raise HTTPException(503, "Model not loaded. Set ADAPTER_DIR to the trained adapters (or SFACA_STUB=1 for a demo).")
     try:
-        result = _ENGINE.predict(sanitized, cluster)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        with _LOCK:
+            res = analyze(text, _SCORER)
+    except ValueError as e:
+        raise HTTPException(413, str(e))
+    except Exception:
+        raise HTTPException(500, "Analysis failed.")
+    res["model"] = _MODEL_NAME
+    return res
 
-    prob_dict = result["probabilities"]
-    human_prob = result["human"]
-    ai_prob = result["ai"]
-    top_gen = result["generator"]
 
-    verdict = "Human-Written" if human_prob >= 0.5 else "AI-Generated"
-    confidence = human_prob if verdict == "Human-Written" else ai_prob
+@app.post("/api/analyze")
+async def api_analyze(text: Optional[str] = Form(None), file: Optional[UploadFile] = File(None)):
+    text, name = await _read_input(text, file)
+    res = _run(text)
+    res["filename"] = name
+    return res
 
-    return AnalyzeResponse(
-        verdict=verdict,
-        confidence=round(confidence, 4),
-        ai_probability=ai_prob,
-        human_probability=round(human_prob, 4),
-        top_generator=top_gen,
-        top_generator_confidence=round(ai_probs[top_gen], 4),
-        script_cluster=cluster,
-        probabilities=prob_dict,
-        sanitized_text_preview=sanitized[:300],
-    )
+
+@app.post("/api/export", response_class=HTMLResponse)
+async def api_export(text: Optional[str] = Form(None), file: Optional[UploadFile] = File(None)):
+    text, name = await _read_input(text, file)
+    return HTMLResponse(to_html(_run(text), name),
+                        headers={"Content-Disposition": 'attachment; filename="sfaca-report.html"'})
+
+
+_DOCS = os.path.join(ROOT, "docs")
+if os.path.isdir(_DOCS):
+    app.mount("/", StaticFiles(directory=_DOCS, html=True), name="ui")
 
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="0.0.0.0", port=7860, reload=False)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 7860)))

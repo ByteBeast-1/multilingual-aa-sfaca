@@ -97,8 +97,8 @@ def test_head_isolation(mock_transformers):
         os.makedirs(os.path.join(tmpdir, cluster1))
         os.makedirs(os.path.join(tmpdir, cluster2))
         
-        head1 = nn.Sequential(nn.Linear(32, 32), nn.GELU(), nn.Dropout(0.1), nn.Linear(32, 10))
-        head2 = nn.Sequential(nn.Linear(32, 32), nn.GELU(), nn.Dropout(0.1), nn.Linear(32, 10))
+        head1 = nn.Sequential(nn.Linear(32, 32), nn.GELU(), nn.Dropout(0.1), nn.Linear(32, 8))
+        head2 = nn.Sequential(nn.Linear(32, 32), nn.GELU(), nn.Dropout(0.1), nn.Linear(32, 8))
         
         # Ensure they are different
         with torch.no_grad():
